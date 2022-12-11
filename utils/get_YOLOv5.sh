@@ -2,7 +2,9 @@
 
 YOLOV5_REPO="https://github.com/ultralytics/yolov5.git"
 YOLOV5_WDIR="yolov5"
-YOLOv5_TAG="v7.0"
+
+# YOLO working version
+YOLOv5_TAG="v6.2"
 
 # Check YOLOv5 code
 if [ ! -d "YOLOV5_REPO" ]; then
