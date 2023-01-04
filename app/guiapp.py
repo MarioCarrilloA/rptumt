@@ -19,7 +19,10 @@ import logging
 import random
 import sys
 import time
-
+import numpy as np
+import cv2
+import qimage2ndarray
+import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 Signal = QtCore.pyqtSignal
@@ -27,6 +30,24 @@ Slot = QtCore.pyqtSlot
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+
+class VideoThread(QThread):
+    change_pixmap_signal = pyqtSignal(np.ndarray)
+
+    def run(self):
+        # capture from web cam
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        count = 0
+        while True:
+            ret, cv_img = cap.read()
+            if ret:
+                self.change_pixmap_signal.emit(cv_img)
+            count+=1
+            print("getting frame: " + str(count))
+            time.sleep(0.06)
 
 
 
@@ -240,6 +261,35 @@ class MainWindow(QMainWindow, guiApp):
         self.log_msg(logging.CRITICAL, "test.........")
         logging.log(logging.INFO, "test 2------------------")
         self.log_msg(logging.CRITICAL, "test.........")
+
+
+        # Video
+        self.disply_width = 1280
+        self.display_height = 720
+        self.view.resize(self.disply_width, self.display_height)
+        self.thread = VideoThread()
+        self.thread.change_pixmap_signal.connect(self.update_image)
+        self.thread.start()
+
+
+    @pyqtSlot(np.ndarray)
+    def update_image(self, cv_img):
+        """Updates the image_label with a new opencv image"""
+        #qt_img = self.convert_cv_qt(cv_img)
+        frame = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        image = qimage2ndarray.array2qimage(frame)
+        self.view.setPixmap(QPixmap.fromImage(image))
+        #self.view.setPixmap(qt_img)
+    
+    def convert_cv_qt(self, cv_img):
+        """Convert from an opencv image to QPixmap"""
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
+        return QPixmap.fromImage(p)
+
 
     def start_thread(self):
         self.worker = Worker()
