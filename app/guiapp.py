@@ -34,7 +34,7 @@ class guiApp(object):
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("3DSCIP Viewer")
         MainWindow.setObjectName("3DSCIP Viewer")
-        MainWindow.setFixedSize(1700, 980)
+        MainWindow.setFixedSize(1700, 1000)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
 
