@@ -21,7 +21,7 @@ import sys
 import time
 import numpy as np
 import cv2
-import qimage2ndarray
+#import qimage2ndarray
 import time
 
 
@@ -51,10 +51,11 @@ except:
 IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
 IMG_FORMAT  = QImage.Format_RGB888
 DISP_SCALE  = 1                # Scaling factor for display image
-DISP_MSEC   = 10                # Delay between display cycles
-CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
-#EXPOSURE    = 0                 # Zero for automatic exposure
-EXPOSURE    = 2400                 # Zero for automatic exposure
+DISP_MSEC   = 50                # Delay between display cycles
+#CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
+CAP_API     = cv2.CAP_V4L2       # API: CAP_ANY or CAP_DSHOW etc...
+EXPOSURE    = 0                 # Zero for automatic exposure
+#EXPOSURE    = 2400                 # Zero for automatic exposure
 TEXT_FONT   = QFont("Courier", 10)
 
 camera_num  = 1                 # Default camera (first in list)
@@ -155,7 +156,7 @@ class guiApp(object):
         self.disp = ImageWidget(self.gBoxView)
         self.disp.setObjectName(u"display")
         self.disp.setGeometry(QRect(10, 20, 1280, 720))
-        
+
         # Logging box
         self.gBoxLog = QGroupBox(self.centralwidget)
         self.gBoxLog.setObjectName(u"groupBox_2")
@@ -196,6 +197,8 @@ class guiApp(object):
         self.listView = QListView(self.gBoxSamples)
         self.listView.setObjectName(u"listView")
         self.listView.setGeometry(QRect(10, 20, 330, 345))
+        self.gBoxSamples.setEnabled(False)
+
 
         # Control
         self.gBoxControl = QGroupBox(self.centralwidget)
@@ -341,13 +344,13 @@ class MainWindow(QMainWindow, guiApp):
         self.sampling_button.clicked.connect(lambda : self.sampling_button.setEnabled(False))
 
 
-        self.log_msg(logging.INFO, "test.........")
-        self.log_msg(logging.DEBUG, "test.........")
-        self.log_msg(logging.WARNING, "test.........")
-        self.log_msg(logging.ERROR, "test.........")
-        self.log_msg(logging.CRITICAL, "test.........")
-        logging.log(logging.INFO, "test 2------------------")
-        self.log_msg(logging.CRITICAL, "test.........")
+        #self.log_msg(logging.INFO, "test.........")
+        #self.log_msg(logging.DEBUG, "test.........")
+        #self.log_msg(logging.WARNING, "test.........")
+        #self.log_msg(logging.ERROR, "test.........")
+        #self.log_msg(logging.CRITICAL, "test.........")
+        #logging.log(logging.INFO, "test 2------------------")
+        #self.log_msg(logging.CRITICAL, "test.........")
 
 
 #        # Video
@@ -367,7 +370,7 @@ class MainWindow(QMainWindow, guiApp):
 #        image = qimage2ndarray.array2qimage(frame)
 #        self.view.setPixmap(QPixmap.fromImage(image))
 #        #self.view.setPixmap(qt_img)
-#    
+#
 #    def convert_cv_qt(self, cv_img):
 #        """Convert from an opencv image to QPixmap"""
 #        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -379,9 +382,11 @@ class MainWindow(QMainWindow, guiApp):
 #
 #
         self.liveview_enabled = False
-        
+
         # Init view
         self.show_default_view()
+        self.log_msg(logging.INFO, "initialized system")
+
 
     def grab_images(self, cam_num, queue):
         cap = cv2.VideoCapture(cam_num-1 + CAP_API)
@@ -392,7 +397,7 @@ class MainWindow(QMainWindow, guiApp):
             cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
         else:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-    
+
         self.log_msg(logging.INFO, "capturing frames")
         while capturing:
             if cap.grab():
@@ -402,14 +407,12 @@ class MainWindow(QMainWindow, guiApp):
                 else:
                     time.sleep(DISP_MSEC / 1000.0)
             else:
-                self.log_msg(logging.CRITICAL, "cannot grab camera frame")
+                self.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
                 break
-        self.log_msg(logging.INFO, "stop capturing frames")
         cap.release()
 
         img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
         queue.put(img)
-        self.log_msg(logging.INFO, "releasing")
 
 
     def show_default_view(self):
@@ -422,21 +425,26 @@ class MainWindow(QMainWindow, guiApp):
     def liveview(self):
         global capturing
         if (self.liveview_enabled == False):
+            self.log_msg(logging.WARNING, "long exposure of the culture to light may affect the incubation process.")
             capturing = True
-            self.log_msg(logging.INFO, "starting live view ...")
+            self.log_msg(logging.INFO, "starting live view session ...")
             self.timer = QTimer(self)           # Timer to trigger display
-            self.timer.timeout.connect(lambda: 
+            self.timer.timeout.connect(lambda:
             self.show_image(image_queue, self.disp, DISP_SCALE))
-            self.timer.start(DISP_MSEC)         
-            self.capture_thread = threading.Thread(target=self.grab_images, 
+            self.timer.start(DISP_MSEC)
+            self.capture_thread = threading.Thread(target=self.grab_images,
                     args=(camera_num, image_queue))
 
 
             self.capture_thread.start()
-            self.liveview_enabled = True
-            self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Stop live view", None))
+            time.sleep(1)
+            if self.capture_thread.is_alive():
+                self.liveview_enabled = True
+                self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Stop live view", None))
+            #else:
+            #    self.log_msg(logging.ERROR, "live view session cancelled!")
         else:
-            self.log_msg(logging.INFO, "stopping live view ...")
+            self.log_msg(logging.INFO, "stopping live view session...")
             self.liveview_enabled = False
             #global capturing
             capturing = False
@@ -453,10 +461,10 @@ class MainWindow(QMainWindow, guiApp):
     def start(self):
         pass
 #        self.timer = QTimer(self)           # Timer to trigger display
-#        self.timer.timeout.connect(lambda: 
+#        self.timer.timeout.connect(lambda:
 #                    self.show_image(image_queue, self.disp, DISP_SCALE))
-#        self.timer.start(DISP_MSEC)         
-#        self.capture_thread = threading.Thread(target=grab_images, 
+#        self.timer.start(DISP_MSEC)
+#        self.capture_thread = threading.Thread(target=grab_images,
 #                    args=(camera_num, image_queue))
         #self.capture_thread.start()         # Thread to grab images
 
@@ -473,9 +481,9 @@ class MainWindow(QMainWindow, guiApp):
         disp_size = img.shape[1]//scale, img.shape[0]//scale
         disp_bpl = disp_size[0] * 3
         if scale > 1:
-            img = cv2.resize(img, disp_size, 
+            img = cv2.resize(img, disp_size,
                              interpolation=cv2.INTER_CUBIC)
-        qimg = QImage(img.data, disp_size[0], disp_size[1], 
+        qimg = QImage(img.data, disp_size[0], disp_size[1],
                       disp_bpl, IMG_FORMAT)
         display.setImage(qimg)
 
@@ -488,7 +496,7 @@ class MainWindow(QMainWindow, guiApp):
     # Append to text display
     def append_text(self, text):
         cur = self.textbox.textCursor()     # Move cursor to end of text
-        cur.movePosition(QTextCursor.End) 
+        cur.movePosition(QTextCursor.End)
         s = str(text)
         while s:
             head,sep,s = s.partition("\n")  # Split line at LF
