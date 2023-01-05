@@ -24,6 +24,44 @@ import cv2
 import qimage2ndarray
 import time
 
+
+VERSION = "Cam_display v0.10"
+
+import sys, time, threading, cv2
+try:
+    from PyQt5.QtCore import Qt
+    pyqt5 = True
+except:
+    pyqt5 = False
+if pyqt5:
+    from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
+    from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
+    from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
+else:
+    from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QPoint
+    from PyQt4.QtGui import QApplication, QMainWindow, QTextEdit, QLabel
+    from PyQt4.QtGui import QWidget, QAction, QVBoxLayout, QHBoxLayout
+    from PyQt4.QtGui import QFont, QPainter, QImage, QTextCursor
+try:
+    import Queue as Queue
+except:
+    import queue as Queue
+
+IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
+IMG_FORMAT  = QImage.Format_RGB888
+DISP_SCALE  = 1                # Scaling factor for display image
+DISP_MSEC   = 10                # Delay between display cycles
+CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
+#EXPOSURE    = 0                 # Zero for automatic exposure
+EXPOSURE    = 2400                 # Zero for automatic exposure
+TEXT_FONT   = QFont("Courier", 10)
+
+camera_num  = 1                 # Default camera (first in list)
+image_queue = Queue.Queue()     # Queue to hold images
+capturing   = True              # Flag to indicate capturing
+
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 Signal = QtCore.pyqtSignal
 Slot = QtCore.pyqtSlot
@@ -32,22 +70,67 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-class VideoThread(QThread):
-    change_pixmap_signal = pyqtSignal(np.ndarray)
+#class VideoThread(QThread):
+#    change_pixmap_signal = pyqtSignal(np.ndarray)
+#
+#    def run(self):
+#        # capture from web cam
+#        cap = cv2.VideoCapture(0)
+#        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+#        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+#        count = 0
+#        while True:
+#            ret, cv_img = cap.read()
+#            if ret:
+#                self.change_pixmap_signal.emit(cv_img)
+#            count+=1
+#            print("getting frame: " + str(count))
+#            time.sleep(0.06)
 
-    def run(self):
-        # capture from web cam
-        cap = cv2.VideoCapture(0)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        count = 0
-        while True:
-            ret, cv_img = cap.read()
-            if ret:
-                self.change_pixmap_signal.emit(cv_img)
-            count+=1
-            print("getting frame: " + str(count))
-            time.sleep(0.06)
+
+# Grab images from the camera (separate thread)
+def grab_images(cam_num, queue):
+    cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+    if EXPOSURE:
+        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+        cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+    else:
+        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+
+    #self.log_msg(logging.INFO, "capturing frames...")
+    while capturing:
+        if cap.grab():
+            retval, image = cap.retrieve(0)
+            if image is not None and queue.qsize() < 2:
+                queue.put(image)
+            else:
+                time.sleep(DISP_MSEC / 1000.0)
+        else:
+            print("Error: can't grab camera image")
+            break
+    #self.log_msg(logging.INFO, "stop capturing frames")
+    cap.release()
+    #self.log_msg(logging.INFO, "releasing")
+
+# Image widget
+class ImageWidget(QWidget):
+    def __init__(self, parent=None):
+        super(ImageWidget, self).__init__(parent)
+        self.image = None
+
+    def setImage(self, image):
+        self.image = image
+        self.setMinimumSize(image.size())
+        self.update()
+
+    def paintEvent(self, event):
+        qp = QPainter()
+        qp.begin(self)
+        if self.image:
+            qp.drawImage(QPoint(0, 0), self.image)
+        qp.end()
 
 
 
@@ -65,11 +148,14 @@ class guiApp(object):
         self.gBoxView.setGeometry(QRect(10, 20, 1300, 760))
         self.gBoxView.setStyleSheet("QGroupBox{border: 1px solid red;}")
         self.gBoxView.setTitle(QCoreApplication.translate("MainWindow", u"View", None))
-        self.view = QLabel(self.gBoxView)
-        self.view.setObjectName(u"label")
-        self.view.setGeometry(QRect(10, 20, 1280, 720))
-        self.view.setStyleSheet("background-color: black")
-
+        #self.view = QLabel(self.gBoxView)
+        #self.view.setObjectName(u"label")
+        #self.view.setGeometry(QRect(10, 20, 1280, 720))
+        #self.view.setStyleSheet("background-color: black")
+        self.disp = ImageWidget(self.gBoxView)
+        self.disp.setObjectName(u"display")
+        self.disp.setGeometry(QRect(10, 20, 1280, 720))
+        
         # Logging box
         self.gBoxLog = QGroupBox(self.centralwidget)
         self.gBoxLog.setObjectName(u"groupBox_2")
@@ -124,7 +210,8 @@ class guiApp(object):
         self.liveview_button = QPushButton(self.gBoxControl)
         self.liveview_button.setObjectName(u"liveview_button")
         self.liveview_button.setGeometry(QRect(20, 90, 103, 36))
-        self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Live view", None))
+        self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
+        self.liveview_button.clicked.connect(self.liveview)
 
         # Menu bar
         MainWindow.setCentralWidget(self.centralwidget)
@@ -245,7 +332,7 @@ class MainWindow(QMainWindow, guiApp):
         layout.addWidget(self.console)
 
         # Connect the non-worker slots and signals
-        self.liveview_button.clicked.connect(self.manual_update)
+        #self.liveview_button.clicked.connect(self.manual_update)
 
         # Start a new worker thread and connect the slots for the worker
         self.start_thread()
@@ -263,32 +350,164 @@ class MainWindow(QMainWindow, guiApp):
         self.log_msg(logging.CRITICAL, "test.........")
 
 
-        # Video
-        self.disply_width = 1280
-        self.display_height = 720
-        self.view.resize(self.disply_width, self.display_height)
-        self.thread = VideoThread()
-        self.thread.change_pixmap_signal.connect(self.update_image)
-        self.thread.start()
+#        # Video
+#        self.disply_width = 1280
+#        self.display_height = 720
+#        self.view.resize(self.disply_width, self.display_height)
+#        self.thread = VideoThread()
+#        self.thread.change_pixmap_signal.connect(self.update_image)
+#        self.thread.start()
+#
+#
+#    @pyqtSlot(np.ndarray)
+#    def update_image(self, cv_img):
+#        """Updates the image_label with a new opencv image"""
+#        #qt_img = self.convert_cv_qt(cv_img)
+#        frame = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+#        image = qimage2ndarray.array2qimage(frame)
+#        self.view.setPixmap(QPixmap.fromImage(image))
+#        #self.view.setPixmap(qt_img)
+#    
+#    def convert_cv_qt(self, cv_img):
+#        """Convert from an opencv image to QPixmap"""
+#        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+#        h, w, ch = rgb_image.shape
+#        bytes_per_line = ch * w
+#        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+#        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
+#        return QPixmap.fromImage(p)
+#
+#
+        self.liveview_enabled = False
+        
+        # Init view
+        self.show_default_view()
 
-
-    @pyqtSlot(np.ndarray)
-    def update_image(self, cv_img):
-        """Updates the image_label with a new opencv image"""
-        #qt_img = self.convert_cv_qt(cv_img)
-        frame = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        image = qimage2ndarray.array2qimage(frame)
-        self.view.setPixmap(QPixmap.fromImage(image))
-        #self.view.setPixmap(qt_img)
+    def grab_images(self, cam_num, queue):
+        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+        if EXPOSURE:
+            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+        else:
+            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
     
-    def convert_cv_qt(self, cv_img):
-        """Convert from an opencv image to QPixmap"""
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
-        return QPixmap.fromImage(p)
+        self.log_msg(logging.INFO, "capturing frames")
+        while capturing:
+            if cap.grab():
+                retval, image = cap.retrieve(0)
+                if image is not None and queue.qsize() < 2:
+                    queue.put(image)
+                else:
+                    time.sleep(DISP_MSEC / 1000.0)
+            else:
+                self.log_msg(logging.CRITICAL, "cannot grab camera frame")
+                break
+        self.log_msg(logging.INFO, "stop capturing frames")
+        cap.release()
+
+        img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
+        queue.put(img)
+        self.log_msg(logging.INFO, "releasing")
+
+
+    def show_default_view(self):
+        img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
+        self.display_image(img, self.disp, 1)
+
+
+        pass
+
+    def liveview(self):
+        global capturing
+        if (self.liveview_enabled == False):
+            capturing = True
+            self.log_msg(logging.INFO, "starting live view ...")
+            self.timer = QTimer(self)           # Timer to trigger display
+            self.timer.timeout.connect(lambda: 
+            self.show_image(image_queue, self.disp, DISP_SCALE))
+            self.timer.start(DISP_MSEC)         
+            self.capture_thread = threading.Thread(target=self.grab_images, 
+                    args=(camera_num, image_queue))
+
+
+            self.capture_thread.start()
+            self.liveview_enabled = True
+            self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Stop live view", None))
+        else:
+            self.log_msg(logging.INFO, "stopping live view ...")
+            self.liveview_enabled = False
+            #global capturing
+            capturing = False
+            print("waiting for thread")
+            self.capture_thread.join()
+            print("shows black background")
+            self.show_default_view()
+            self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
+            #time.sleep(3)
+            #self.show_default_view()
+
+
+    # Start image capture & display
+    def start(self):
+        pass
+#        self.timer = QTimer(self)           # Timer to trigger display
+#        self.timer.timeout.connect(lambda: 
+#                    self.show_image(image_queue, self.disp, DISP_SCALE))
+#        self.timer.start(DISP_MSEC)         
+#        self.capture_thread = threading.Thread(target=grab_images, 
+#                    args=(camera_num, image_queue))
+        #self.capture_thread.start()         # Thread to grab images
+
+    # Fetch camera image from queue, and display it
+    def show_image(self, imageq, display, scale):
+        if not imageq.empty():
+            image = imageq.get()
+            if image is not None and len(image) > 0:
+                img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                self.display_image(img, display, scale)
+
+    # Display an image, reduce size if required
+    def display_image(self, img, display, scale=1):
+        disp_size = img.shape[1]//scale, img.shape[0]//scale
+        disp_bpl = disp_size[0] * 3
+        if scale > 1:
+            img = cv2.resize(img, disp_size, 
+                             interpolation=cv2.INTER_CUBIC)
+        qimg = QImage(img.data, disp_size[0], disp_size[1], 
+                      disp_bpl, IMG_FORMAT)
+        display.setImage(qimg)
+
+    # Handle sys.stdout.write: update text display
+    def write(self, text):
+        self.text_update.emit(str(text))
+    def flush(self):
+        pass
+
+    # Append to text display
+    def append_text(self, text):
+        cur = self.textbox.textCursor()     # Move cursor to end of text
+        cur.movePosition(QTextCursor.End) 
+        s = str(text)
+        while s:
+            head,sep,s = s.partition("\n")  # Split line at LF
+            cur.insertText(head)            # Insert text at cursor
+            if sep:                         # New line if LF
+                cur.insertBlock()
+        self.textbox.setTextCursor(cur)     # Update visible cursor
+
+    # Window is closing: stop video capture
+    def closeEvent(self, event):
+        global capturing
+        capturing = False
+        #self.capture_thread.join()
+
+
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
 
 
     def start_thread(self):
@@ -349,24 +568,6 @@ class MainWindow(QMainWindow, guiApp):
     @Slot()
     def clear_display(self):
         self.console.clear()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
