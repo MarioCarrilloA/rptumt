@@ -23,7 +23,9 @@ import numpy as np
 import cv2
 #import qimage2ndarray
 import time
-
+from datetime import datetime
+import random
+import string
 
 VERSION = "Cam_display v0.10"
 
@@ -194,10 +196,12 @@ class guiApp(object):
         self.gBoxSamples.setGeometry(QRect(1320, 405, 350, 375))
         self.gBoxSamples.setStyleSheet("QGroupBox{border: 1px solid blue;}")
         self.gBoxSamples.setTitle(QCoreApplication.translate("MainWindow", u"Sampled images", None))
-        self.listView = QListView(self.gBoxSamples)
+        #self.listView = QListView(self.gBoxSamples)
+        self.listView = QListWidget(self.gBoxSamples)
         self.listView.setObjectName(u"listView")
         self.listView.setGeometry(QRect(10, 20, 330, 345))
-        self.gBoxSamples.setEnabled(False)
+        #self.gBoxSamples.setEnabled(False)
+        self.listView.itemClicked.connect(self.listwidgetclicked)
 
 
         # Control
@@ -236,14 +240,7 @@ class guiApp(object):
 class Signaller(QtCore.QObject):
     signal = Signal(str, logging.LogRecord)
 
-#
-# Output to a Qt GUI is only supposed to happen on the main thread. So, this
-# handler is designed to take a slot function which is set up to run in the main
-# thread. In this example, the function takes a string argument which is a
-# formatted log message, and the log record which generated it. The formatted
-# string is just a convenience - you could format a string for output any way
-# you like in the slot function itself.
-#
+
 # You specify the slot function to do whatever GUI updates you want. The handler
 # doesn't know or care about specific UI elements.
 #
@@ -339,9 +336,12 @@ class MainWindow(QMainWindow, guiApp):
 
         # Start a new worker thread and connect the slots for the worker
         self.start_thread()
-        self.sampling_button.clicked.connect(self.worker.start)
+        #self.sampling_button.clicked.connect(self.worker.start)
+        self.sampling_button.clicked.connect(self.get_sample)
+
+        # DISABLE BUTTON
         # Once started, the button should be disabled
-        self.sampling_button.clicked.connect(lambda : self.sampling_button.setEnabled(False))
+        #self.sampling_button.clicked.connect(lambda : self.sampling_button.setEnabled(False))
 
 
         #self.log_msg(logging.INFO, "test.........")
@@ -388,6 +388,10 @@ class MainWindow(QMainWindow, guiApp):
         self.log_msg(logging.INFO, "initialized system")
 
 
+        # Sample items
+        self.sampled_images = {}
+
+
     def grab_images(self, cam_num, queue):
         cap = cv2.VideoCapture(cam_num-1 + CAP_API)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
@@ -415,12 +419,60 @@ class MainWindow(QMainWindow, guiApp):
         queue.put(img)
 
 
+    def grab_sample_image(self, cam_num):
+        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+        if EXPOSURE:
+            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+        else:
+            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+
+        self.log_msg(logging.INFO, "getting frame from camera")
+        if cap.grab():
+            retval, image = cap.retrieve(0)
+            cap.release()
+            if image is not None:
+                return image
+            else:
+                None
+
     def show_default_view(self):
         img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
         self.display_image(img, self.disp, 1)
-
-
         pass
+
+    def get_random_id(self, length):
+        # choose from all lowercase letter
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(length))
+
+    def get_sample(self):
+        self.log_msg(logging.INFO, "getting sample")
+        image = self.grab_sample_image(camera_num)
+        if image.all() == None:
+            self.log_msg(logging.ERROR, "cannot grab frame from camera")
+        else:
+            now = datetime.now()
+            sample_id = self.get_random_id(6)
+            image_name = sample_id + "_" + now.strftime("%d_%m_%Y-%H_%M_%S")
+            self.sampled_images.update({image_name: image})
+            self.listView.addItem(QListWidgetItem(image_name))
+
+    def listwidgetclicked(self, item):
+        image_key = item.text()
+        print(image_key)
+        #print('!!! click {}'.format(item.text()))
+        img = self.sampled_images[image_key]
+        image_queue.put(img)
+        self.show_image(image_queue, self.disp, DISP_SCALE) 
+        #print("-------------------------------------")
+        #print(img)
+        #print("#########################")
+        #self.display_image(img)
+
+
 
     def liveview(self):
         global capturing
