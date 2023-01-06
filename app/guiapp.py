@@ -219,6 +219,12 @@ class guiApp(object):
         self.liveview_button.setGeometry(QRect(20, 90, 103, 36))
         self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
         self.liveview_button.clicked.connect(self.liveview)
+        self.monitor_button = QPushButton(self.gBoxControl)
+        self.monitor_button.setObjectName(u"monitor_button")
+        self.monitor_button.setGeometry(QRect(140, 40, 120, 36))
+        self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
+        self.monitor_button.clicked.connect(self.monitoring)
+
 
         # Menu bar
         MainWindow.setCentralWidget(self.centralwidget)
@@ -344,6 +350,9 @@ class MainWindow(QMainWindow, guiApp):
         #self.sampling_button.clicked.connect(lambda : self.sampling_button.setEnabled(False))
 
 
+        # MONITORING
+        self.monitor_timer = QTimer(self)
+        self.monitor_running = False
         #self.log_msg(logging.INFO, "test.........")
         #self.log_msg(logging.DEBUG, "test.........")
         #self.log_msg(logging.WARNING, "test.........")
@@ -472,7 +481,31 @@ class MainWindow(QMainWindow, guiApp):
         #print("#########################")
         #self.display_image(img)
 
+    def update_plot(self):
+        pass
 
+
+    def start_monitoring(self):
+        self.log_msg(logging.INFO, "Starting loop")
+        while self.monitor_running:
+            self.log_msg(logging.INFO, "processing sample")
+            time.sleep(2)
+        self.log_msg(logging.INFO, "monitor process finished")
+
+    def monitoring(self):
+        if (self.monitor_running == False):
+            self.log_msg(logging.INFO, "starting monitoring process ...")
+            #self.monitor_timer = QTimer(self)
+            #self.timer.timeout.connect(lambda)
+            self.monitor_thread = threading.Thread(target=self.start_monitoring)
+            self.monitor_thread.start()
+            self.monitor_running = True
+            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Stop monitoring", None))
+        else:
+            self.monitor_running = False
+            self.monitor_thread.join()
+            self.log_msg(logging.INFO, "stopping monitoring process ...")
+            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
 
     def liveview(self):
         global capturing
@@ -486,7 +519,6 @@ class MainWindow(QMainWindow, guiApp):
             self.timer.start(DISP_MSEC)
             self.capture_thread = threading.Thread(target=self.grab_images,
                     args=(camera_num, image_queue))
-
 
             self.capture_thread.start()
             time.sleep(1)
