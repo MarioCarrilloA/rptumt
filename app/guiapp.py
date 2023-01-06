@@ -26,6 +26,7 @@ import time
 from datetime import datetime
 import random
 import string
+import pyqtgraph
 
 VERSION = "Cam_display v0.10"
 
@@ -185,10 +186,14 @@ class guiApp(object):
         self.gBoxChart.setGeometry(QRect(1320, 20, 350, 375))
         self.gBoxChart.setStyleSheet("QGroupBox{border: 1px solid magenta;}")
         self.gBoxChart.setTitle(QCoreApplication.translate("MainWindow", u"Status", None))
-        self.label_2 = QLabel(self.gBoxChart)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setGeometry(QRect(10, 20, 330, 345))
-        self.label_2.setStyleSheet("background-color: white")
+        #self.label_2 = QLabel(self.gBoxChart)
+        #self.label_2.setObjectName(u"label_2")
+        #self.label_2.setGeometry(QRect(10, 20, 330, 345))
+        #self.label_2.setStyleSheet("background-color: white")
+        self.size_chart = pyqtgraph.PlotWidget(self.gBoxChart)
+        self.size_chart.setGeometry(QRect(10, 20, 330, 345))
+        self.size_chart.setBackground('w')
+
 
         # Sampled images
         self.gBoxSamples = QGroupBox(self.centralwidget)
