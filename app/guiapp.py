@@ -74,6 +74,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
+SAMPLING_TIME = 1
+
 #class VideoThread(QThread):
 #    change_pixmap_signal = pyqtSignal(np.ndarray)
 #
@@ -142,7 +144,7 @@ class guiApp(object):
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("3DSCIP Viewer")
         MainWindow.setObjectName("3DSCIP Viewer")
-        MainWindow.setFixedSize(1700, 1000)
+        MainWindow.setFixedSize(1800, 1000)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
 
@@ -190,9 +192,9 @@ class guiApp(object):
         #self.label_2.setObjectName(u"label_2")
         #self.label_2.setGeometry(QRect(10, 20, 330, 345))
         #self.label_2.setStyleSheet("background-color: white")
-        self.size_chart = pyqtgraph.PlotWidget(self.gBoxChart)
-        self.size_chart.setGeometry(QRect(10, 20, 330, 345))
-        self.size_chart.setBackground('w')
+        self.status_chart = pyqtgraph.PlotWidget(self.gBoxChart)
+        self.status_chart.setGeometry(QRect(10, 20, 330, 345))
+        self.status_chart.setBackground('w')
 
 
         # Sampled images
@@ -358,6 +360,11 @@ class MainWindow(QMainWindow, guiApp):
         # MONITORING
         self.monitor_timer = QTimer(self)
         self.monitor_running = False
+        self.data_x = []
+        self.data_y = []
+        self.monitor_queue = Queue.Queue()
+
+
         #self.log_msg(logging.INFO, "test.........")
         #self.log_msg(logging.DEBUG, "test.........")
         #self.log_msg(logging.WARNING, "test.........")
@@ -477,31 +484,48 @@ class MainWindow(QMainWindow, guiApp):
     def listwidgetclicked(self, item):
         image_key = item.text()
         print(image_key)
-        #print('!!! click {}'.format(item.text()))
         img = self.sampled_images[image_key]
         image_queue.put(img)
-        self.show_image(image_queue, self.disp, DISP_SCALE) 
-        #print("-------------------------------------")
-        #print(img)
-        #print("#########################")
-        #self.display_image(img)
+        self.show_image(image_queue, self.disp, DISP_SCALE)
 
     def update_plot(self):
-        pass
+        self.log_msg(logging.INFO, "updating plot")
+        if not self.monitor_queue.empty():
+            data = self.monitor_queue.get()
+            self.data_y.append(data)
+            self.data_x = list(range(len(self.data_y)))
+            self.log_msg(logging.INFO, str(data))
+            self.status_chart.plot(self.data_x, self.data_y,)
 
 
     def start_monitoring(self):
         self.log_msg(logging.INFO, "Starting loop")
+        count = 0
+        measurement_flag = True
         while self.monitor_running:
-            self.log_msg(logging.INFO, "processing sample")
-            time.sleep(2)
+            self.log_msg(logging.INFO, "loop")
+            if measurement_flag == True:
+                self.log_msg(logging.INFO, "getting measurement")
+                avg_area = random.uniform(0.1, 1.0)
+                self.monitor_queue.put(avg_area)
+                measurement_flag = False
+            #print(avg_area)
+            #self.data_x.append(avg_area)
+            #self.data_y.append(count)
+            count+=1
+            if (count == SAMPLING_TIME):
+                count=0
+                measurement_flag=True
+            time.sleep(1)
+
         self.log_msg(logging.INFO, "monitor process finished")
 
     def monitoring(self):
         if (self.monitor_running == False):
             self.log_msg(logging.INFO, "starting monitoring process ...")
-            #self.monitor_timer = QTimer(self)
-            #self.timer.timeout.connect(lambda)
+            self.monitor_timer = QTimer(self)
+            self.monitor_timer.timeout.connect(lambda:self.update_plot())
+            self.monitor_timer.start(1000)
             self.monitor_thread = threading.Thread(target=self.start_monitoring)
             self.monitor_thread.start()
             self.monitor_running = True
@@ -511,6 +535,7 @@ class MainWindow(QMainWindow, guiApp):
             self.monitor_thread.join()
             self.log_msg(logging.INFO, "stopping monitoring process ...")
             self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
+            self.monitor_timer.stop()
 
     def liveview(self):
         global capturing
@@ -542,6 +567,7 @@ class MainWindow(QMainWindow, guiApp):
             print("shows black background")
             self.show_default_view()
             self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
+            self.timer.stop()
             #time.sleep(3)
             #self.show_default_view()
 
