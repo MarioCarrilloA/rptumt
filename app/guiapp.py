@@ -195,7 +195,15 @@ class guiApp(object):
         self.status_chart = pyqtgraph.PlotWidget(self.gBoxChart)
         self.status_chart.setGeometry(QRect(10, 20, 330, 345))
         self.status_chart.setBackground('w')
+        self.status_chart.setTitle("Bounding box size", color="b", size="12pt")
+        self.status_chart.addLegend()
+        self.styles = {"color": "#f00", "font-size": "10px"}
+        self.status_chart.setLabel("left", "object size um", **self.styles)
+        self.status_chart.setLabel("bottom", "Sample number", **self.styles)
+        self.status_chart.showGrid(x=True, y=True)
 
+        #self.status_chart.legend().setVisible(True)
+        #print(dir(self.status_chart.addLegend()))
 
         # Sampled images
         self.gBoxSamples = QGroupBox(self.centralwidget)
@@ -362,45 +370,15 @@ class MainWindow(QMainWindow, guiApp):
         self.monitor_running = False
         self.data_x = []
         self.data_y = []
+        self.ref_x = []
+        self.ref_y = []
+        self.ref_line = self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
+        self.msu_line = self.status_chart.plot(self.data_x, self.data_y, name="measurements",
+                    pen='b', symbol='o', symbolSize=5)
+
+        #legend.addItem(self.ref_line, name=self.ref_name.opts['beads'])
         self.monitor_queue = Queue.Queue()
 
-
-        #self.log_msg(logging.INFO, "test.........")
-        #self.log_msg(logging.DEBUG, "test.........")
-        #self.log_msg(logging.WARNING, "test.........")
-        #self.log_msg(logging.ERROR, "test.........")
-        #self.log_msg(logging.CRITICAL, "test.........")
-        #logging.log(logging.INFO, "test 2------------------")
-        #self.log_msg(logging.CRITICAL, "test.........")
-
-
-#        # Video
-#        self.disply_width = 1280
-#        self.display_height = 720
-#        self.view.resize(self.disply_width, self.display_height)
-#        self.thread = VideoThread()
-#        self.thread.change_pixmap_signal.connect(self.update_image)
-#        self.thread.start()
-#
-#
-#    @pyqtSlot(np.ndarray)
-#    def update_image(self, cv_img):
-#        """Updates the image_label with a new opencv image"""
-#        #qt_img = self.convert_cv_qt(cv_img)
-#        frame = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-#        image = qimage2ndarray.array2qimage(frame)
-#        self.view.setPixmap(QPixmap.fromImage(image))
-#        #self.view.setPixmap(qt_img)
-#
-#    def convert_cv_qt(self, cv_img):
-#        """Convert from an opencv image to QPixmap"""
-#        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-#        h, w, ch = rgb_image.shape
-#        bytes_per_line = ch * w
-#        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-#        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
-#        return QPixmap.fromImage(p)
-#
 #
         self.liveview_enabled = False
 
@@ -494,8 +472,20 @@ class MainWindow(QMainWindow, guiApp):
             data = self.monitor_queue.get()
             self.data_y.append(data)
             self.data_x = list(range(len(self.data_y)))
+
+
+            # Reference data
+            self.ref_x = list(range(len(self.data_y) + 5))
+            self.ref_y = [0.5] * (len(self.data_y) + 5)
+
+            self.msu_line.setData(self.data_x, self.data_y)
+            self.ref_line.setData(self.ref_x, self.ref_y)
+
             self.log_msg(logging.INFO, str(data))
-            self.status_chart.plot(self.data_x, self.data_y,)
+            #self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
+            #self.status_chart.plot(self.data_x, self.data_y, name="measurements",
+            #        pen='b', symbol='o', symbolSize=5)
+            #self.status_chart.plot(self.data_x, self.data_y)
 
 
     def start_monitoring(self):
