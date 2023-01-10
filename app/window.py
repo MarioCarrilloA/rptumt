@@ -14,7 +14,7 @@ import random
 import string
 import pyqtgraph
 
-VERSION = "Cam_display v0.10"
+#VERSION = "Cam_display v0.10"
 
 import sys, time, threading, cv2
 try:
