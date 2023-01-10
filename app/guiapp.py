@@ -11,7 +11,16 @@
 from PyQt5.QtCore import *  # type: ignore
 from PyQt5.QtGui import *  # type: ignore
 from PyQt5.QtWidgets import *  # type: ignore
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import (
+        QApplication,
+        QMainWindow,
+        QPushButton,
+        QLabel,
+        QVBoxLayout,
+        QWidget,
+        QLineEdit,
+        QFormLayout
+)
 import sys
 
 
@@ -108,7 +117,25 @@ class guiApp(object):
         self.gstatus_info.setGeometry(QRect(1610, 405, 285, 375))
         self.gstatus_info.setStyleSheet("QGroupBox{border: 1px solid gray;}")
         self.gstatus_info.setTitle(QCoreApplication.translate("MainWindow", u"Status information", None))
-
+        self.last_point = QLineEdit(str(0.0))
+        self.last_point.setReadOnly(True)
+        self.total_samples = QLineEdit(str(0))
+        self.total_samples.setReadOnly(True)
+        self.succeed_samples = QLineEdit(str(0))
+        self.succeed_samples.setReadOnly(True)
+        self.failed_samples = QLineEdit(str(0))
+        self.failed_samples.setReadOnly(True)
+        self.ph = QLineEdit(str(0))
+        self.ph.setReadOnly(True)
+        self.vspace = QLabel()
+        self.vspace.setGeometry(0, 0, 20, 30)
+        self.table = QFormLayout(self.gstatus_info)
+        self.table.addRow("", self.vspace) # This is to add extra space, TODO: improve this
+        self.table.addRow("Last measurement", self.last_point)
+        self.table.addRow("Total samples", self.total_samples)
+        self.table.addRow("Succeed samples", self.succeed_samples)
+        self.table.addRow("Failed samples", self.failed_samples)
+        self.table.addRow("pH (approx.)", self.ph)
 
         # Control
         self.gBoxControl = QGroupBox(self.centralwidget)
