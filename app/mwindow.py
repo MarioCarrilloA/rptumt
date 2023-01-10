@@ -308,6 +308,9 @@ class MainWindow(QMainWindow, guiApp):
             self.ref_line.setData(self.ref_x, self.ref_y)
             self.log_msg(logging.INFO, str(data))
 
+            # Update info
+            self.last_point.setText("{:.6f}".format(data))
+            self.total_samples.setText(str(len(self.data_x)))
 
     def start_monitoring(self):
         self.log_msg(logging.INFO, "Starting loop")
