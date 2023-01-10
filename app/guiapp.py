@@ -41,7 +41,7 @@ class guiApp(object):
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("3DSCIP Viewer")
         MainWindow.setObjectName("3DSCIP Viewer")
-        MainWindow.setFixedSize(1800, 1000)
+        MainWindow.setFixedSize(1900, 1000)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
 
@@ -49,21 +49,21 @@ class guiApp(object):
         self.gBoxView = QGroupBox(self.centralwidget)
         self.gBoxView.setObjectName(u"groupBox_3")
         self.gBoxView.setGeometry(QRect(10, 20, 1300, 760))
-        self.gBoxView.setStyleSheet("QGroupBox{border: 1px solid red;}")
+        self.gBoxView.setStyleSheet("QGroupBox{border: 1px solid gray;}")
         self.gBoxView.setTitle(QCoreApplication.translate("MainWindow", u"View", None))
         self.disp = ImageWidget(self.gBoxView)
         self.disp.setObjectName(u"display")
-        self.disp.setGeometry(QRect(10, 20, 1280, 720))
+        self.disp.setGeometry(QRect(10, 25, 1280, 720))
 
         # Logging box
         self.gBoxLog = QGroupBox(self.centralwidget)
         self.gBoxLog.setObjectName(u"groupBox_2")
-        self.gBoxLog.setGeometry(QRect(10, 795, 1300, 160))
-        self.gBoxLog.setStyleSheet("QGroupBox{border: 1px solid green;}")
+        self.gBoxLog.setGeometry(QRect(10, 795, 1300, 170))
+        self.gBoxLog.setStyleSheet("QGroupBox{border: 1px solid gray;}")
         self.gBoxLog.setTitle(QCoreApplication.translate("MainWindow", u"logging", None))
         self.scrollArea = QScrollArea(self.gBoxLog)
         self.scrollArea.setObjectName(u"scrollArea")
-        self.scrollArea.setGeometry(QRect(10, 20, 1280, 130))
+        self.scrollArea.setGeometry(QRect(10, 25, 1280, 130))
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
@@ -73,19 +73,18 @@ class guiApp(object):
         self.console.setGeometry(QRect(-1, -1, 1280, 130))
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-
         # Status chart
         self.gBoxChart = QGroupBox(self.centralwidget)
         self.gBoxChart.setObjectName(u"groupBox_4")
-        self.gBoxChart.setGeometry(QRect(1320, 20, 350, 375))
-        self.gBoxChart.setStyleSheet("QGroupBox{border: 1px solid magenta;}")
+        self.gBoxChart.setGeometry(QRect(1320, 20, 575, 375))
+        self.gBoxChart.setStyleSheet("QGroupBox{border: 1px solid gray;}")
         self.gBoxChart.setTitle(QCoreApplication.translate("MainWindow", u"Status", None))
         self.status_chart = pyqtgraph.PlotWidget(self.gBoxChart)
-        self.status_chart.setGeometry(QRect(10, 20, 330, 345))
+        self.status_chart.setGeometry(QRect(10, 25, 555, 345))
         self.status_chart.setBackground('w')
         self.status_chart.setTitle("Bounding box size", color="b", size="12pt")
         self.status_chart.addLegend()
-        self.styles = {"color": "#f00", "font-size": "10px"}
+        self.styles = {"color": "blue", "font-size": "14px"}
         self.status_chart.setLabel("left", "object size um", **self.styles)
         self.status_chart.setLabel("bottom", "Sample number", **self.styles)
         self.status_chart.showGrid(x=True, y=True)
@@ -93,23 +92,30 @@ class guiApp(object):
 
         # Sampled images
         self.gBoxSamples = QGroupBox(self.centralwidget)
-        self.gBoxSamples.setObjectName(u"groupBox")
-        self.gBoxSamples.setGeometry(QRect(1320, 405, 350, 375))
-        self.gBoxSamples.setStyleSheet("QGroupBox{border: 1px solid blue;}")
+        self.gBoxSamples.setObjectName(u"groupBox_5")
+        self.gBoxSamples.setGeometry(QRect(1320, 405, 280, 375))
+        self.gBoxSamples.setStyleSheet("QGroupBox{border: 1px solid gray;}")
         self.gBoxSamples.setTitle(QCoreApplication.translate("MainWindow", u"Sampled images", None))
         self.listView = QListWidget(self.gBoxSamples)
         self.listView.setObjectName(u"listView")
-        self.listView.setGeometry(QRect(10, 20, 330, 345))
+        self.listView.setGeometry(QRect(10, 25, 260, 345))
         #self.gBoxSamples.setEnabled(False)
         self.listView.itemClicked.connect(self.listwidgetclicked)
+
+        # status information
+        self.gstatus_info = QGroupBox(self.centralwidget)
+        self.gstatus_info.setObjectName(u"status_info")
+        self.gstatus_info.setGeometry(QRect(1610, 405, 285, 375))
+        self.gstatus_info.setStyleSheet("QGroupBox{border: 1px solid gray;}")
+        self.gstatus_info.setTitle(QCoreApplication.translate("MainWindow", u"Status information", None))
 
 
         # Control
         self.gBoxControl = QGroupBox(self.centralwidget)
         self.gBoxControl.setObjectName(u"groupBox_5")
-        self.gBoxControl.setGeometry(QRect(1320, 795, 350, 160))
-        self.gBoxControl.setStyleSheet("QGroupBox{border: 1px solid black;}")
-        self.gBoxControl.setTitle(QCoreApplication.translate("MainWindow", u"control", None))
+        self.gBoxControl.setGeometry(QRect(1320, 795, 575, 170))
+        self.gBoxControl.setStyleSheet("QGroupBox{border: 1px solid gray;}")
+        self.gBoxControl.setTitle(QCoreApplication.translate("MainWindow", u"Control", None))
         self.sampling_button = QPushButton(self.gBoxControl)
         self.sampling_button.setObjectName(u"sampling")
         self.sampling_button.setGeometry(QRect(20, 40, 103, 36))
