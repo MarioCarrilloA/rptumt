@@ -151,8 +151,8 @@ class Worker(QtCore.QObject):
 class MainWindow(QMainWindow, guiApp):
 
     COLORS = {
-        logging.DEBUG: 'black',
-        logging.INFO: 'blue',
+        logging.DEBUG: 'blue',
+        logging.INFO: 'black',
         logging.WARNING: 'orange',
         logging.ERROR: 'red',
         logging.CRITICAL: 'purple',
@@ -169,7 +169,7 @@ class MainWindow(QMainWindow, guiApp):
         self.console.setReadOnly(True)
         self.handler = h = QtHandler(self.update_status)
         # Remember to use qThreadName rather than threadName in the format string.
-        fs = '%(asctime)s %(qThreadName)-12s %(levelname)-8s %(message)s'
+        fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
         formatter = logging.Formatter(fs)
         h.setFormatter(formatter)
         logger.addHandler(h)
