@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# trap ctrl-c to turnoff the led
+trap ctrl_c INT
+
+function ctrl_c() {
+    pushd $CODE_SOURCE
+        python turnoff_led.py
+    popd
+}
+
+CODE_SOURCE="${HOME}/Desktop/RESULTS/code"
+pushd $CODE_SOURCE
+    python data_collector.py
+popd
