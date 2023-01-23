@@ -1,18 +1,28 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+import logging
+from PyQt5.QtCore import *  # type: ignore
+from PyQt5.QtGui import *  # type: ignore
+from PyQt5.QtWidgets import *  # type: ignore
+from PyQt5.QtWidgets import (
+        QApplication,
+        QMainWindow,
+        QPushButton,
+        QLabel,
+        QVBoxLayout,
+        QWidget,
+        QLineEdit,
+        QFormLayout
+)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 
 Signal = QtCore.pyqtSignal
 Slot = QtCore.pyqtSlot
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
-COLORS = {
-        logging.DEBUG: 'black',
-        logging.INFO: 'blue',
-        logging.WARNING: 'orange',
-        logging.ERROR: 'red',
-        logging.CRITICAL: 'purple',
-}
+#logging.basicConfig(level=logging.DEBUG)
+#logger = logging.getLogger(__name__)
 
 #
 # Used to generate random levels for logging.
@@ -71,8 +81,8 @@ class Worker(QtCore.QObject):
 
 
 class Console(QPlainTextEdit):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args):
+        QPlainTextEdit.__init__(self, *args)
         f = QtGui.QFont('nosuchfont')
         f.setStyleHint(f.Monospace)
         self.setFont(f)
@@ -83,6 +93,15 @@ class Console(QPlainTextEdit):
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
         logger.addHandler(self.handler)
+
+        self.COLORS = {
+            logging.DEBUG: 'black',
+            logging.INFO: 'blue',
+            logging.WARNING: 'orange',
+            logging.ERROR: 'red',
+            logging.CRITICAL: 'purple',
+        }
+
 
     def start_thread(self):
         self.worker = Worker()
@@ -115,7 +134,7 @@ class Console(QPlainTextEdit):
     def update_status(self, status, record):
         color = self.COLORS.get(record.levelno, 'black')
         s = '<pre><font color="%s">%s</font></pre>' % (color, status)
-        self.console.appendHtml(s)
+        self.appendHtml(s)
 
 
     @Slot()

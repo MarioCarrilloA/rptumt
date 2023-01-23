@@ -92,33 +92,36 @@ def grab_images(cam_num, queue):
 
 
 
-# Signals need to be contained in a QObject or subclass in order to be correctly
-# initialized.
+## Signals need to be contained in a QObject or subclass in order to be correctly
+## initialized.
+##
+#class Signaller(QtCore.QObject):
+#    signal = Signal(str, logging.LogRecord)
 #
-class Signaller(QtCore.QObject):
-    signal = Signal(str, logging.LogRecord)
-
-
-# You specify the slot function to do whatever GUI updates you want. The handler
-# doesn't know or care about specific UI elements.
 #
-class QtHandler(logging.Handler):
-    def __init__(self, slotfunc, *args, **kwargs):
-        super(QtHandler, self).__init__(*args, **kwargs)
-        self.signaller = Signaller()
-        self.signaller.signal.connect(slotfunc)
-
-    def emit(self, record):
-        s = self.format(record)
-        self.signaller.signal.emit(s, record)
+## You specify the slot function to do whatever GUI updates you want. The handler
+## doesn't know or care about specific UI elements.
+##
+#class QtHandler(logging.Handler):
+#    def __init__(self, slotfunc, *args, **kwargs):
+#        super(QtHandler, self).__init__(*args, **kwargs)
+#        self.signaller = Signaller()
+#        self.signaller.signal.connect(slotfunc)
+#
+#    def emit(self, record):
+#        s = self.format(record)
+#        self.signaller.signal.emit(s, record)
 
 #
 # This example uses QThreads, which means that the threads at the Python level
 # are named something like "Dummy-1". The function below gets the Qt name of the
 # current thread.
 #
-def ctname():
-    return QtCore.QThread.currentThread().objectName()
+
+
+
+#def ctname():
+#    return QtCore.QThread.currentThread().objectName()
 
 
 #
@@ -131,21 +134,21 @@ LEVELS = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR,
 # This example worker just outputs messages sequentially, interspersed with
 # random delays of the order of a few seconds.
 #
-class Worker(QtCore.QObject):
-    @Slot()
-    def start(self):
-        extra = {'qThreadName': ctname() }
-        logger.debug('Started work', extra=extra)
-        i = 1
-        # Let the thread run until interrupted. This allows reasonably clean
-        # thread termination.
-        while not QtCore.QThread.currentThread().isInterruptionRequested():
-            delay = 0.5 + random.random() * 2
-            time.sleep(delay)
-            level = random.choice(LEVELS)
-            logger.log(level, 'Message after delay of %3.1f: %d', delay, i, extra=extra)
-            i += 1
-
+#class Worker(QtCore.QObject):
+#    @Slot()
+#    def start(self):
+#        extra = {'qThreadName': ctname() }
+#        logger.debug('Started work', extra=extra)
+#        i = 1
+#        # Let the thread run until interrupted. This allows reasonably clean
+#        # thread termination.
+#        while not QtCore.QThread.currentThread().isInterruptionRequested():
+#            delay = 0.5 + random.random() * 2
+#            time.sleep(delay)
+#            level = random.choice(LEVELS)
+#            logger.log(level, 'Message after delay of %3.1f: %d', delay, i, extra=extra)
+#            i += 1
+#
 
 
 class MainWindow(QMainWindow, guiApp):
@@ -167,12 +170,12 @@ class MainWindow(QMainWindow, guiApp):
         f.setStyleHint(f.Monospace)
         self.console.setFont(f)
         self.console.setReadOnly(True)
-        self.handler = h = QtHandler(self.update_status)
+        #self.handler = h = QtHandler(self.update_status)
         # Remember to use qThreadName rather than threadName in the format string.
         fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
         formatter = logging.Formatter(fs)
-        h.setFormatter(formatter)
-        logger.addHandler(h)
+        #h.setFormatter(formatter)
+        #logger.addHandler(h)
         # Set up to terminate the QThread when we exit
         app.aboutToQuit.connect(self.force_quit)
 
@@ -212,7 +215,7 @@ class MainWindow(QMainWindow, guiApp):
 
         # Init view
         self.show_default_view()
-        self.log_msg(logging.INFO, "initialized system")
+        self.console.log_msg(logging.INFO, "initialized system")
 
 
         # Sample items
@@ -229,7 +232,7 @@ class MainWindow(QMainWindow, guiApp):
         else:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
 
-        self.log_msg(logging.INFO, "capturing frames")
+        self.console.log_msg(logging.INFO, "capturing frames")
         while capturing:
             if cap.grab():
                 retval, image = cap.retrieve(0)
@@ -238,7 +241,7 @@ class MainWindow(QMainWindow, guiApp):
                 else:
                     time.sleep(DISP_MSEC / 1000.0)
             else:
-                self.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
+                self.console.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
                 break
         cap.release()
 
@@ -256,7 +259,7 @@ class MainWindow(QMainWindow, guiApp):
         else:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
 
-        self.log_msg(logging.INFO, "getting frame from camera")
+        self.console.log_msg(logging.INFO, "getting frame from camera")
         if cap.grab():
             retval, image = cap.retrieve(0)
             cap.release()
@@ -276,10 +279,10 @@ class MainWindow(QMainWindow, guiApp):
         return ''.join(random.choice(letters) for i in range(length))
 
     def get_sample(self):
-        self.log_msg(logging.INFO, "getting sample")
+        self.console.log_msg(logging.INFO, "getting sample")
         image = self.grab_sample_image(camera_num)
         if image.all() == None:
-            self.log_msg(logging.ERROR, "cannot grab frame from camera")
+            self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
         else:
             now = datetime.now()
             sample_id = self.get_random_id(6)
@@ -295,7 +298,7 @@ class MainWindow(QMainWindow, guiApp):
         self.show_image(image_queue, self.disp, DISP_SCALE)
 
     def update_plot(self):
-        self.log_msg(logging.INFO, "updating plot")
+        self.console.log_msg(logging.INFO, "updating plot")
         if not self.monitor_queue.empty():
             data = self.monitor_queue.get()
             self.data_y.append(data)
@@ -306,20 +309,20 @@ class MainWindow(QMainWindow, guiApp):
             self.ref_y = [0.5] * (len(self.data_y) + 5)
             self.msu_line.setData(self.data_x, self.data_y)
             self.ref_line.setData(self.ref_x, self.ref_y)
-            self.log_msg(logging.INFO, str(data))
+            self.console.log_msg(logging.INFO, str(data))
 
             # Update info
             self.last_point.setText("{:.6f}".format(data))
             self.total_samples.setText(str(len(self.data_x)))
 
     def start_monitoring(self):
-        self.log_msg(logging.INFO, "Starting loop")
+        self.console.log_msg(logging.INFO, "Starting loop")
         count = 0
         measurement_flag = True
         while self.monitor_running:
-            self.log_msg(logging.INFO, "loop")
+            self.console.log_msg(logging.INFO, "loop")
             if measurement_flag == True:
-                self.log_msg(logging.INFO, "getting measurement")
+                self.console.log_msg(logging.INFO, "getting measurement")
                 avg_area = random.uniform(0.1, 1.0)
                 self.monitor_queue.put(avg_area)
                 measurement_flag = False
@@ -329,11 +332,11 @@ class MainWindow(QMainWindow, guiApp):
                 measurement_flag=True
             time.sleep(1)
 
-        self.log_msg(logging.INFO, "monitor process finished")
+        self.console.log_msg(logging.INFO, "monitor process finished")
 
     def monitoring(self):
         if (self.monitor_running == False):
-            self.log_msg(logging.INFO, "starting monitoring process ...")
+            self.console.log_msg(logging.INFO, "starting monitoring process ...")
             self.monitor_timer = QTimer(self)
             self.monitor_timer.timeout.connect(lambda:self.update_plot())
             self.monitor_timer.start(1000)
@@ -344,16 +347,16 @@ class MainWindow(QMainWindow, guiApp):
         else:
             self.monitor_running = False
             self.monitor_thread.join()
-            self.log_msg(logging.INFO, "stopping monitoring process ...")
+            self.console.log_msg(logging.INFO, "stopping monitoring process ...")
             self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
             self.monitor_timer.stop()
 
     def liveview(self):
         global capturing
         if (self.liveview_enabled == False):
-            self.log_msg(logging.WARNING, "long exposure of the culture to light may affect the incubation process.")
+            self.console.log_msg(logging.WARNING, "long exposure of the culture to light may affect the incubation process.")
             capturing = True
-            self.log_msg(logging.INFO, "starting live view session ...")
+            self.console.log_msg(logging.INFO, "starting live view session ...")
             self.timer = QTimer(self)           # Timer to trigger display
             self.timer.timeout.connect(lambda:
             self.show_image(image_queue, self.disp, DISP_SCALE))
@@ -369,7 +372,7 @@ class MainWindow(QMainWindow, guiApp):
             #else:
             #    self.log_msg(logging.ERROR, "live view session cancelled!")
         else:
-            self.log_msg(logging.INFO, "stopping live view session...")
+            self.console.log_msg(logging.INFO, "stopping live view session...")
             self.liveview_enabled = False
             #global capturing
             capturing = False
@@ -457,39 +460,39 @@ class MainWindow(QMainWindow, guiApp):
         if self.worker_thread.isRunning():
             self.kill_thread()
 
-    # The functions below update the UI and run in the main thread because
-    # that's where the slots are set up
-
-    @Slot(str, logging.LogRecord)
-    def update_status(self, status, record):
-        color = self.COLORS.get(record.levelno, 'black')
-        s = '<pre><font color="%s">%s</font></pre>' % (color, status)
-        self.console.appendHtml(s)
-
-
-    @Slot()
-    def log_msg(self, level, msg):
-        # This function uses the formatted message passed in, but also uses
-        # information from the record to format the message in an appropriate
-        # color according to its severity (level).
-        #level = random.choice(LEVELS)
-        extra = {'qThreadName': ctname() }
-        logger.log(level, msg, extra=extra)
-
-
-
-
-    @Slot()
-    def manual_update(self):
-        # This function uses the formatted message passed in, but also uses
-        # information from the record to format the message in an appropriate
-        # color according to its severity (level).
-        level = random.choice(LEVELS)
-        extra = {'qThreadName': ctname() }
-        logger.log(level, 'Manually logged!', extra=extra)
-
-    @Slot()
-    def clear_display(self):
-        self.console.clear()
-
+#    # The functions below update the UI and run in the main thread because
+#    # that's where the slots are set up
+#
+#    @Slot(str, logging.LogRecord)
+#    def update_status(self, status, record):
+#        color = self.COLORS.get(record.levelno, 'black')
+#        s = '<pre><font color="%s">%s</font></pre>' % (color, status)
+#        self.console.appendHtml(s)
+#
+#
+#    @Slot()
+#    def log_msg(self, level, msg):
+#        # This function uses the formatted message passed in, but also uses
+#        # information from the record to format the message in an appropriate
+#        # color according to its severity (level).
+#        #level = random.choice(LEVELS)
+#        extra = {'qThreadName': ctname() }
+#        logger.log(level, msg, extra=extra)
+#
+#
+#
+#
+#    @Slot()
+#    def manual_update(self):
+#        # This function uses the formatted message passed in, but also uses
+#        # information from the record to format the message in an appropriate
+#        # color according to its severity (level).
+#        level = random.choice(LEVELS)
+#        extra = {'qThreadName': ctname() }
+#        logger.log(level, 'Manually logged!', extra=extra)
+#
+#    @Slot()
+#    def clear_display(self):
+#        self.console.clear()
+#
 

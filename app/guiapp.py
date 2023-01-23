@@ -26,6 +26,7 @@ import sys
 
 import pyqtgraph
 
+from console import *
 
 # Image widget
 class ImageWidget(QWidget):
@@ -77,7 +78,7 @@ class guiApp(object):
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
         self.scrollAreaWidgetContents.setGeometry(QRect(10, 20, 1280, 130))
-        self.console = QPlainTextEdit(self.scrollAreaWidgetContents)
+        self.console = Console(self.scrollAreaWidgetContents)
         self.console.setObjectName(u"console")
         self.console.setGeometry(QRect(-1, -1, 1280, 130))
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
