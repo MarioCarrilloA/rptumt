@@ -15,74 +15,76 @@ import string
 import pyqtgraph
 
 
-import sys, time, threading, cv2
-try:
-    from PyQt5.QtCore import Qt
-    pyqt5 = True
-except:
-    pyqt5 = False
-if pyqt5:
-    from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
-    from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
-    from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
-else:
-    from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QPoint
-    from PyQt4.QtGui import QApplication, QMainWindow, QTextEdit, QLabel
-    from PyQt4.QtGui import QWidget, QAction, QVBoxLayout, QHBoxLayout
-    from PyQt4.QtGui import QFont, QPainter, QImage, QTextCursor
-try:
-    import Queue as Queue
-except:
-    import queue as Queue
+from camera import *
 
-IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
-IMG_FORMAT  = QImage.Format_RGB888
-DISP_SCALE  = 1                # Scaling factor for display image
-DISP_MSEC   = 50                # Delay between display cycles
-#CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
-CAP_API     = cv2.CAP_V4L2       # API: CAP_ANY or CAP_DSHOW etc...
-EXPOSURE    = 0                 # Zero for automatic exposure
-#EXPOSURE    = 2400                 # Zero for automatic exposure
-TEXT_FONT   = QFont("Courier", 10)
+#import sys, time, threading, cv2
+#try:
+#    from PyQt5.QtCore import Qt
+#    pyqt5 = True
+#except:
+#    pyqt5 = False
+#if pyqt5:
+#    from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
+#    from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
+#    from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
+#    from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
+#else:
+#    from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QPoint
+#    from PyQt4.QtGui import QApplication, QMainWindow, QTextEdit, QLabel
+#    from PyQt4.QtGui import QWidget, QAction, QVBoxLayout, QHBoxLayout
+#    from PyQt4.QtGui import QFont, QPainter, QImage, QTextCursor
+#try:
+#    import Queue as Queue
+#except:
+#    import queue as Queue
+#
+#IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
+#IMG_FORMAT  = QImage.Format_RGB888
+#DISP_SCALE  = 1                # Scaling factor for display image
+#DISP_MSEC   = 50                # Delay between display cycles
+##CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
+#CAP_API     = cv2.CAP_V4L2       # API: CAP_ANY or CAP_DSHOW etc...
+#EXPOSURE    = 0                 # Zero for automatic exposure
+##EXPOSURE    = 2400                 # Zero for automatic exposure
+#TEXT_FONT   = QFont("Courier", 10)
+#
+#camera_num  = 1                 # Default camera (first in list)
+#image_queue = Queue.Queue()     # Queue to hold images
+#capturing   = True              # Flag to indicate capturing
+#
+#
+#from PyQt5 import QtCore, QtGui, QtWidgets
+#Signal = QtCore.pyqtSignal
+#Slot = QtCore.pyqtSlot
+#
+#
+#
+#SAMPLING_TIME = 1
 
-camera_num  = 1                 # Default camera (first in list)
-image_queue = Queue.Queue()     # Queue to hold images
-capturing   = True              # Flag to indicate capturing
 
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-Signal = QtCore.pyqtSignal
-Slot = QtCore.pyqtSlot
-
-
-
-SAMPLING_TIME = 1
-
-
-# Grab images from the camera (separate thread)
-def grab_images(cam_num, queue):
-    cap = cv2.VideoCapture(cam_num-1 + CAP_API)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
-    if EXPOSURE:
-        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-        cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
-    else:
-        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-
-    #self.log_msg(logging.INFO, "capturing frames...")
-    while capturing:
-        if cap.grab():
-            retval, image = cap.retrieve(0)
-            if image is not None and queue.qsize() < 2:
-                queue.put(image)
-            else:
-                time.sleep(DISP_MSEC / 1000.0)
-        else:
-            print("Error: can't grab camera image")
-            break
-    cap.release()
+## Grab images from the camera (separate thread)
+#def grab_images(cam_num, queue):
+#   cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+#    cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
+#    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+#    if EXPOSURE:
+#        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+#        cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+#    else:
+#        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+#
+#    #self.log_msg(logging.INFO, "capturing frames...")
+#    while capturing:
+#        if cap.grab():
+#            retval, image = cap.retrieve(0)
+#            if image is not None and queue.qsize() < 2:
+#                queue.put(image)
+#            else:
+#                time.sleep(DISP_MSEC / 1000.0)
+#        else:
+#            print("Error: can't grab camera image")
+#            break
+#    cap.release()
 
 
 class MainWindow(QMainWindow, guiApp):
@@ -135,51 +137,55 @@ class MainWindow(QMainWindow, guiApp):
         self.sampled_images = {}
 
 
-    def grab_images(self, cam_num, queue):
-        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
-        if EXPOSURE:
-            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
-        else:
-            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-
-        self.console.log_msg(logging.INFO, "capturing frames")
-        while capturing:
-            if cap.grab():
-                retval, image = cap.retrieve(0)
-                if image is not None and queue.qsize() < 2:
-                    queue.put(image)
-                else:
-                    time.sleep(DISP_MSEC / 1000.0)
-            else:
-                self.console.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
-                break
-        cap.release()
-
-        img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
-        queue.put(img)
+        self.camera = Camera()
 
 
-    def grab_sample_image(self, cam_num):
-        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
-        if EXPOSURE:
-            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
-        else:
-            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+#    def grab_images(self, cam_num, queue):
+#        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+#        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
+#        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+#        if EXPOSURE:
+#            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+#            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+#        else:
+#            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+#
+#        self.console.log_msg(logging.INFO, "capturing frames")
+#        while capturing:
+#            if cap.grab():
+#                retval, image = cap.retrieve(0)
+#                if image is not None and queue.qsize() < 2:
+#                    queue.put(image)
+#                else:
+#                    time.sleep(DISP_MSEC / 1000.0)
+#            else:
+#                self.console.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
+#                break
+#        cap.release()
+#
+#        img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
+#        queue.put(img)
+#
+#
+#    def grab_sample_image(self, cam_num):
+#        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+#        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
+#        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+#        if EXPOSURE:
+#            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+#            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+#        else:
+#            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+#
+#        self.console.log_msg(logging.INFO, "getting frame from camera")
+#        if cap.grab():
+#            retval, image = cap.retrieve(0)
+#            cap.release()
+#            if image is not None:
+#                return image
+#            else:
+#                None
 
-        self.console.log_msg(logging.INFO, "getting frame from camera")
-        if cap.grab():
-            retval, image = cap.retrieve(0)
-            cap.release()
-            if image is not None:
-                return image
-            else:
-                None
 
     def show_default_view(self):
         img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
@@ -193,7 +199,7 @@ class MainWindow(QMainWindow, guiApp):
 
     def get_sample(self):
         self.console.log_msg(logging.INFO, "getting sample")
-        image = self.grab_sample_image(camera_num)
+        image = self.camera.grab_sample_image(camera_num)
         if image.all() == None:
             self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
         else:
@@ -274,7 +280,7 @@ class MainWindow(QMainWindow, guiApp):
             self.timer.timeout.connect(lambda:
             self.show_image(image_queue, self.disp, DISP_SCALE))
             self.timer.start(DISP_MSEC)
-            self.capture_thread = threading.Thread(target=self.grab_images,
+            self.capture_thread = threading.Thread(target=self.camera.grab_images,
                     args=(camera_num, image_queue))
 
             self.capture_thread.start()
@@ -321,6 +327,7 @@ class MainWindow(QMainWindow, guiApp):
     # Handle sys.stdout.write: update text display
     def write(self, text):
         self.text_update.emit(str(text))
+
     def flush(self):
         pass
 
