@@ -1,3 +1,4 @@
+
 from guiapp import *
 
 import datetime
@@ -48,7 +49,7 @@ TEXT_FONT   = QFont("Courier", 10)
 
 camera_num  = 1                 # Default camera (first in list)
 image_queue = Queue.Queue()     # Queue to hold images
-capturing   = True              # Flag to indicate capturing
+#capturing   = True              # Flag to indicate capturing
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -62,7 +63,7 @@ SAMPLING_TIME = 1
 
 class Camera():
     def __init__(self):
-        pass
+        self.capturing = False
 
     def grab_images(self, cam_num, queue):
         cap = cv2.VideoCapture(cam_num-1 + CAP_API)
@@ -77,7 +78,7 @@ class Camera():
         #self.console.log_msg(logging.INFO, "capturing frames")
         #self.console.log_msg(logging.INFO, "capturing frames")
         logging.info("capturing frames")
-        while capturing:
+        while self.capturing:
             if cap.grab():
                 retval, image = cap.retrieve(0)
                 if image is not None and queue.qsize() < 2:
@@ -113,5 +114,11 @@ class Camera():
                 return image
             else:
                 None
+
+    def disable_capture(self):
+        self.capturing = False
+
+    def enable_capture(self):
+        self.capturing = True
 
 

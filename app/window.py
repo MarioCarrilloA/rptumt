@@ -154,10 +154,12 @@ class MainWindow(QMainWindow, guiApp):
             self.monitor_timer.stop()
 
     def liveview(self):
-        global capturing
+        #global capturing
         if (self.liveview_enabled == False):
-            self.console.log_msg(logging.WARNING, "long exposure of the culture to light may affect the incubation process.")
-            capturing = True
+            self.console.log_msg(logging.WARNING,
+                "long exposure of the culture to light may affect the incubation process.")
+            #capturing = True
+            self.camera.enable_capture()
             self.console.log_msg(logging.INFO, "starting live view session ...")
             self.timer = QTimer(self)           # Timer to trigger display
             self.timer.timeout.connect(lambda:
@@ -177,7 +179,8 @@ class MainWindow(QMainWindow, guiApp):
             self.console.log_msg(logging.INFO, "stopping live view session...")
             self.liveview_enabled = False
             #global capturing
-            capturing = False
+            #capturing = False
+            self.camera.disable_capture()
             print("waiting for thread")
             self.capture_thread.join()
             print("shows black background")

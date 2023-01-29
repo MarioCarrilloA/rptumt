@@ -1,3 +1,6 @@
+# This code is base on:
+# https://gist.github.com/vsajip/a87bd7f4234510b4fd6bdcd4ffea376d
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
 from PyQt5.QtCore import *  # type: ignore
