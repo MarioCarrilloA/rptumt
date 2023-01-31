@@ -142,6 +142,13 @@ class serialPowerSupply():
             time.sleep(1)
 
 
+    def set_default_current(self):
+        strcurr = str(DEFAULT_CURRENT)
+        print("Set default current: " + strcurr)
+        current = "SI1:" + strcurr
+        msg = self.command(current)
+
+
     def enable_output(self):
         print("Enable output")
         msg = self.command("OP1")
@@ -159,10 +166,21 @@ class serialPowerSupply():
         self.serial_port.close()
         sys.exit(0)
 
+
+    def clear_device(self):
+        """ This funcion cleans all configurations in the
+        device. The voltage and currnet are set to 0 and the
+        outputs are switched off.
+        """
+        print("Clear device")
+        msg = self.command("CLR")
+
+
 def main():
     s = serialPowerSupply()
     s.init_control()
     s.enable_mixed_mode()
+    s.set_default_current()
     s.run_voltage_sequence()
     s.disable_output()
     s.finish()
