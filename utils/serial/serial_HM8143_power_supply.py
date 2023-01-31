@@ -8,9 +8,17 @@ import numpy as np
 import signal
 import sys
 
+
+DEFAULT_CURRENT = 0.20
+DEFAULT_VOLTAGE = 7.40
+INIT_VOLTAGE_SEQ = 7.80
+STOP_VOLTAGE_SEQ = 9.00
+STEP_VOLTAGE_SEQ = 0.24
+
 class serialPowerSupply():
     def __init__(self):
         self.serial_port = None
+
 
     def readline_cr(self):
         EOL = b'\r'
@@ -25,6 +33,7 @@ class serialPowerSupply():
                 break
         return line.decode("UTF-8")
 
+
     def command(self, cmd):
         self.serial_port.write(cmd.encode("UTF-8"))
         time.sleep(0.5)
@@ -32,6 +41,7 @@ class serialPowerSupply():
         self.serial_port.flush()
 
         return data
+
 
     def init_control(self):
         print("Init device......")
@@ -45,9 +55,11 @@ class serialPowerSupply():
         )
         self.print_id()
 
+
     def enable_mixed_mode(self):
         print("Enable mixed mode")
         msg = self.command("MX1")
+
 
     def disable_mixed_mode(self):
         print("Disable mixed mode")
@@ -73,7 +85,6 @@ class serialPowerSupply():
 
 
     def set_voltage(self, voltage):
-        print("Set voltage")
         msg = self.command(voltage)
 
 
@@ -83,21 +94,27 @@ class serialPowerSupply():
         for i in range(0, 5):
             msg = self.command(cmd)
             if (len(msg) != 0):
-                found_flag = True
-                print(msg)
+                data = msg
                 break
-        if (found_flag == False):
-            print("error: no possible to get an answer")
+        return data
 
 
     def print_id(self):
         print("Looking for device id")
-        self.loop_cmd("*IDN?")
+        data = self.loop_cmd("*IDN?")
+        if (len(data) != 0):
+            print(data)
+        else:
+            print("error: device does not answer")
 
 
     def get_voltage(self):
-        print("Voltage:")
-        self.loop_cmd("MU1")
+        data = self.loop_cmd("MU1")
+        if (len(data) != 0):
+            print("Measured voltage: " + data)
+        else:
+            print("Measured voltage: UNKNOWN!")
+
 
     def print_status(self):
         found_flag = False
@@ -113,11 +130,13 @@ class serialPowerSupply():
 
     def run_voltage_sequence(self):
         flag_output = False
-        for v in np.arange(7.80, 9.00, 0.24):
-            voltage = "SU1:{:.2f}".format(v)
-            print(voltage)
+        for v in np.arange(INIT_VOLTAGE_SEQ, STOP_VOLTAGE_SEQ, STEP_VOLTAGE_SEQ):
+            strv = "{:.2f}".format(v)
+            voltage = "SU1:" + strv
+            print("Set voltage: " + strv)
             self.set_voltage(voltage)
             if flag_output == False:
+                flag_output = True
                 self.enable_output()
             self.get_voltage()
             time.sleep(1)
@@ -145,11 +164,6 @@ def main():
     s.init_control()
     s.enable_mixed_mode()
     s.run_voltage_sequence()
-    s.set_voltage("SU1:9.00")
-    s.enable_output()
-    s.get_voltage()
-    time.sleep(5)
-    s.print_status()
     s.disable_output()
     s.finish()
 
