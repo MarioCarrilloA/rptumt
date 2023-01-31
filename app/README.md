@@ -1,3 +1,18 @@
+## Example to make profiling
+
+```
+python -m cProfile -o program.prof detection.py
+
+```
+
+### It can visualized with snakeviz
+
+```
+pip install snakeviz
+snakeviz program.prof
+```
+
+
 ### In case you have the following error:
 
 ```
@@ -9,6 +24,7 @@ This application failed to start because no Qt platform plugin could be initiali
 
 Available platform plugins are: xcb, dxcb, xcb, eglfs, linuxfb, minimal, minimalegl, offscreen, vnc.
 ```
+
 
 ### Apply the workaround
 
