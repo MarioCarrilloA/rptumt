@@ -1,3 +1,6 @@
+import errno
+import os
+import subprocess
 import tkinter as tk
 import time
 
@@ -7,11 +10,36 @@ from tkinter import ttk
 from tkinter import Button
 from tkinter import StringVar
 from tkinter import Label
-
-RESOLUTION = (1280, 720)
+from configparser import ConfigParser
 
 # https://automaticaddison.com/how-to-set-up-real-time-video-using-opencv-on-raspberry-pi-4/
 # https://roboticsbackend.com/raspberry-pi-camera-picamera-python-library/
+
+# read configuration.ini for sampling configuration
+config_object = ConfigParser()
+
+# Example "/home/pi/Desktop/CONFIGURATION.ini"
+config_object.read("CONFIGURATION.ini")
+
+# parse file
+camera_conf = config_object["CAMERA_CONFIGURATION"]
+resolution = camera_conf["resolution"]
+fps = int(camera_conf["fps"])
+
+FPS = 30
+RESOLUTION = (1280, 720)
+
+if (fps != 0 or fps != ""):
+    FPS = fps
+
+if (resolution != ""):
+    W, H = resolution.split("x")
+    RESOLUTION = (int(W), int(H))
+
+print("*** Video configuration ***")
+print("Resolution: " + str(RESOLUTION))
+print("Frames per second: " + str(fps))
+
 
 class recorder():
     def __init__(self):
@@ -21,13 +49,14 @@ class recorder():
         self.root.resizable(False, False)
         self.root.title('Video recorder')
         self.camera = PiCamera()
-        self.camera.framerate = 30
+        self.camera.framerate = FPS
         self.camera.resolution = RESOLUTION
         self.camera.preview_fullscreen = False
         ws = self.root.winfo_screenwidth()
         hs = self.root.winfo_screenheight()
         self.camera.preview_window = (round(ws/2), 160, 640, 360)
         self.camera.start_preview()
+        self.video_out_file = ""
 
         #Label
         self.state = StringVar()
@@ -48,10 +77,18 @@ class recorder():
         self.stop_button.grid(row=2, column=0)
         self.stop_button.config(state=tk.DISABLED)
 
+
+        # Convert to mp4  button
+        self.mp4_button = Button(self.root, text='Convert to mp4', command=self.convert2mp4)
+        self.mp4_button.config(width=20, height=1)
+        self.mp4_button.grid(row=3, column=0)
+        self.mp4_button.config(state=tk.DISABLED)
+
+
         # Exit button
         self.exit_button = Button(self.root, text='Exit', command=self.quit)
         self.exit_button.config(width=20, height=1)
-        self.exit_button.grid(row=3, column=0)
+        self.exit_button.grid(row=4, column=0)
 
 
     def stop(self):
@@ -59,20 +96,52 @@ class recorder():
         self.lbl.config(bg="white")
         self.exit_button.config(state=tk.NORMAL)
         self.start_button.config(state=tk.NORMAL)
+        self.mp4_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
         self.camera.stop_recording()
         print("saved on " + self.video_out_file)
 
+
     def start(self):
         now = datetime.now()
-        self.video_out_file = now.strftime("%d_%m_%Y-%H_%M_%S") + ".h264"
+        self.video_basename = "/home/pi/Desktop/VIDEOS/" + now.strftime("%d_%m_%Y-%H_%M_%S")
+        self.video_out_file = self.video_basename + ".h264"
         self.state.set("Recording...")
         self.start_button.config(state=tk.DISABLED)
+        self.mp4_button.config(state=tk.DISABLED)
         self.exit_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
         self.lbl.config(bg="yellow")
         self.camera.start_recording(self.video_out_file)
         print("start recording...")
+
+
+    def convert2mp4(self):
+        print("convert to mp4")
+        if (self.is_MP4Box_tool()):
+            video_format = '{0}:fps={1}'.format(self.video_out_file, FPS)
+            print(video_format)
+            mp4out = self.video_basename + ".mp4"
+            process = subprocess.Popen(['MP4Box', '-add', video_format, "-new", mp4out],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            print(stdout.decode("UTF-8"))
+            print(stderr.decode("UTF-8"))
+        else:
+            print("error: MP4Box no found")
+            self.mp4_button.config(state=tk.DISABLED)
+
+
+    def is_MP4Box_tool(self):
+        try:
+            devnull = open(os.devnull)
+            subprocess.Popen(["MP4Box"], stdout=devnull, stderr=devnull).communicate()
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                return False
+        return True
+
 
     def display(self):
         self.root.mainloop()
