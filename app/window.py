@@ -59,19 +59,24 @@ class MainWindow(QMainWindow, guiApp):
         self.monitor_queue = Queue.Queue()
         self.liveview_enabled = False
 
+        # Camera settings
+        self.width = 1280
+        self.heigt = 720
+
+        # Display settings
+        self.img_format = QImage.Format_RGB888
+
         # Init view
         self.show_default_view()
         self.console.log_msg(logging.INFO, "initialized system")
 
         # Sample items
         self.sampled_images = {}
-
-
         self.camera = Camera()
 
 
     def show_default_view(self):
-        img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
+        img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
         self.display_image(img, self.disp, 1)
         pass
 
@@ -207,7 +212,7 @@ class MainWindow(QMainWindow, guiApp):
             img = cv2.resize(img, disp_size,
                              interpolation=cv2.INTER_CUBIC)
         qimg = QImage(img.data, disp_size[0], disp_size[1],
-                      disp_bpl, IMG_FORMAT)
+                      disp_bpl, self.img_format)
         display.setImage(qimg)
 
     # Handle sys.stdout.write: update text display

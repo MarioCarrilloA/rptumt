@@ -15,30 +15,43 @@ import random
 import string
 import pyqtgraph
 
+from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
+from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
+from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
 
-import sys, time, threading, cv2
-try:
-    from PyQt5.QtCore import Qt
-    pyqt5 = True
-except:
-    pyqt5 = False
-if pyqt5:
-    from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
-    from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
-    from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
-else:
-    from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QPoint
-    from PyQt4.QtGui import QApplication, QMainWindow, QTextEdit, QLabel
-    from PyQt4.QtGui import QWidget, QAction, QVBoxLayout, QHBoxLayout
-    from PyQt4.QtGui import QFont, QPainter, QImage, QTextCursor
-try:
-    import Queue as Queue
-except:
-    import queue as Queue
+import threading
 
-IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
-IMG_FORMAT  = QImage.Format_RGB888
+from PyQt5 import QtCore, QtGui, QtWidgets
+import queue as Queue
+
+
+
+#import sys, time, threading, cv2
+#try:
+#    from PyQt5.QtCore import Qt
+#    pyqt5 = True
+#except:
+#    pyqt5 = False
+#if pyqt5:
+#    from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
+#    from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
+#    from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
+#    from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
+#else:
+#    from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QPoint
+#    from PyQt4.QtGui import QApplication, QMainWindow, QTextEdit, QLabel
+#    from PyQt4.QtGui import QWidget, QAction, QVBoxLayout, QHBoxLayout
+#    from PyQt4.QtGui import QFont, QPainter, QImage, QTextCursor
+#try:
+#import Queue as Queue
+
+#except:
+
+
+
+#IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
+#IMG_FORMAT  = QImage.Format_RGB888
 DISP_SCALE  = 1                # Scaling factor for display image
 DISP_MSEC   = 50                # Delay between display cycles
 #CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
@@ -52,7 +65,6 @@ image_queue = Queue.Queue()     # Queue to hold images
 #capturing   = True              # Flag to indicate capturing
 
 
-from PyQt5 import QtCore, QtGui, QtWidgets
 Signal = QtCore.pyqtSignal
 Slot = QtCore.pyqtSlot
 
@@ -64,11 +76,13 @@ SAMPLING_TIME = 1
 class Camera():
     def __init__(self):
         self.capturing = False
+        self.width = 1280
+        self.heigh = 720
 
     def grab_images(self, cam_num, queue):
         cap = cv2.VideoCapture(cam_num-1 + CAP_API)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
         if EXPOSURE:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
             cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
@@ -91,14 +105,14 @@ class Camera():
                 break
         cap.release()
 
-        img = np.zeros([IMG_SIZE[1], IMG_SIZE[0], 3], dtype=np.uint8)
+        img = np.zeros([self.heigh, self.width, 3], dtype=np.uint8)
         queue.put(img)
 
 
     def grab_sample_image(self, cam_num):
         cap = cv2.VideoCapture(cam_num-1 + CAP_API)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, IMG_SIZE[0])
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, IMG_SIZE[1])
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
         if EXPOSURE:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
             cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
