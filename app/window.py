@@ -65,6 +65,9 @@ class MainWindow(QMainWindow, guiApp):
 
         # Display settings
         self.img_format = QImage.Format_RGB888
+        self.image_queue = Queue.Queue()
+        self.display_scale = 1
+        self.display_time = 50
 
         # Init view
         self.show_default_view()
@@ -101,8 +104,8 @@ class MainWindow(QMainWindow, guiApp):
         image_key = item.text()
         print(image_key)
         img = self.sampled_images[image_key]
-        image_queue.put(img)
-        self.show_image(image_queue, self.disp, DISP_SCALE)
+        self.image_queue.put(img)
+        self.show_image(self.image_queue, self.disp, self.display_scale)
 
     def update_plot(self):
         self.console.log_msg(logging.INFO, "updating plot")
@@ -168,10 +171,10 @@ class MainWindow(QMainWindow, guiApp):
             self.console.log_msg(logging.INFO, "starting live view session ...")
             self.timer = QTimer(self)           # Timer to trigger display
             self.timer.timeout.connect(lambda:
-            self.show_image(image_queue, self.disp, DISP_SCALE))
-            self.timer.start(DISP_MSEC)
+            self.show_image(self.image_queue, self.disp, self.display_scale))
+            self.timer.start(self.display_time)
             self.capture_thread = threading.Thread(target=self.camera.grab_images,
-                    args=(camera_num, image_queue))
+                    args=(self.image_queue,))
 
             self.capture_thread.start()
             time.sleep(1)

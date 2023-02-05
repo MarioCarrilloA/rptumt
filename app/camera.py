@@ -52,21 +52,22 @@ import queue as Queue
 
 #IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
 #IMG_FORMAT  = QImage.Format_RGB888
-DISP_SCALE  = 1                # Scaling factor for display image
-DISP_MSEC   = 50                # Delay between display cycles
-#CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
-CAP_API     = cv2.CAP_V4L2       # API: CAP_ANY or CAP_DSHOW etc...
-EXPOSURE    = 0                 # Zero for automatic exposure
-#EXPOSURE    = 2400                 # Zero for automatic exposure
-TEXT_FONT   = QFont("Courier", 10)
+#DISP_SCALE  = 1                # Scaling factor for display image
 
-camera_num  = 1                 # Default camera (first in list)
-image_queue = Queue.Queue()     # Queue to hold images
+#DISP_MSEC   = 50                # Delay between display cycles
+#CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
+#CAP_API     = cv2.CAP_V4L2       # API: CAP_ANY or CAP_DSHOW etc...
+#EXPOSURE    = 0                 # Zero for automatic exposure
+#EXPOSURE    = 2400                 # Zero for automatic exposure
+#TEXT_FONT   = QFont("Courier", 10)
+
+#camera_num  = 1                 # Default camera (first in list)
+#image_queue = Queue.Queue()     # Queue to hold images
 #capturing   = True              # Flag to indicate capturing
 
 
-Signal = QtCore.pyqtSignal
-Slot = QtCore.pyqtSlot
+#Signal = QtCore.pyqtSignal
+#Slot = QtCore.pyqtSlot
 
 
 
@@ -76,14 +77,21 @@ SAMPLING_TIME = 1
 class Camera():
     def __init__(self):
         self.capturing = False
+
+        # Configuration
         self.width = 1280
         self.heigh = 720
+        self.cap_api = cv2.CAP_V4L2
+        self.cycle_time = 50
+        self.exposure_time = 0 # Zero for automatic exposure time
+        self.camera_number = 1
 
-    def grab_images(self, cam_num, queue):
-        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+
+    def grab_images(self, queue):
+        cap = cv2.VideoCapture(self.camera_number - 1 + self.cap_api)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
-        if EXPOSURE:
+        if self.exposure_time:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
             cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
         else:
@@ -98,7 +106,7 @@ class Camera():
                 if image is not None and queue.qsize() < 2:
                     queue.put(image)
                 else:
-                    time.sleep(DISP_MSEC / 1000.0)
+                    time.sleep(self.cycle_time / 1000.0)
             else:
                 logging.error("cannot grab frames from camera, session cancelled!")
                 #self.console.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
@@ -110,10 +118,10 @@ class Camera():
 
 
     def grab_sample_image(self, cam_num):
-        cap = cv2.VideoCapture(cam_num-1 + CAP_API)
+        cap = cv2.VideoCapture(cam_num-1 + self.cap_api)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
-        if EXPOSURE:
+        if self.exposure:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
             cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
         else:
@@ -134,5 +142,4 @@ class Camera():
 
     def enable_capture(self):
         self.capturing = True
-
 
