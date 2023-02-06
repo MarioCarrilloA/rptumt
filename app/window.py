@@ -12,7 +12,7 @@ from datetime import datetime
 import random
 import string
 import pyqtgraph
-
+import threading
 
 from camera import *
 

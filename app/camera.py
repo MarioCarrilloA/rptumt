@@ -1,78 +1,10 @@
-
-from guiapp import *
-
-import datetime
-import logging
-import random
-import sys
-import time
-import numpy as np
 import cv2
-#import qimage2ndarray
-import time
-from datetime import datetime
-import random
-import string
-import pyqtgraph
-
-from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
-from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
-from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
-
-import threading
-
-from PyQt5 import QtCore, QtGui, QtWidgets
+import logging
+import numpy as np
 import queue as Queue
-
-
-
-#import sys, time, threading, cv2
-#try:
-#    from PyQt5.QtCore import Qt
-#    pyqt5 = True
-#except:
-#    pyqt5 = False
-#if pyqt5:
-#    from PyQt5.QtCore import QTimer, QPoint, pyqtSignal
-#    from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLabel
-#    from PyQt5.QtWidgets import QWidget, QAction, QVBoxLayout, QHBoxLayout
-#    from PyQt5.QtGui import QFont, QPainter, QImage, QTextCursor
-#else:
-#    from PyQt4.QtCore import Qt, pyqtSignal, QTimer, QPoint
-#    from PyQt4.QtGui import QApplication, QMainWindow, QTextEdit, QLabel
-#    from PyQt4.QtGui import QWidget, QAction, QVBoxLayout, QHBoxLayout
-#    from PyQt4.QtGui import QFont, QPainter, QImage, QTextCursor
-#try:
-#import Queue as Queue
-
-#except:
-
-
-
-#IMG_SIZE    = 1280,720          # 640,480 or 1280,720 or 1920,1080
-#IMG_FORMAT  = QImage.Format_RGB888
-#DISP_SCALE  = 1                # Scaling factor for display image
-
-#DISP_MSEC   = 50                # Delay between display cycles
-#CAP_API     = cv2.CAP_ANY       # API: CAP_ANY or CAP_DSHOW etc...
-#CAP_API     = cv2.CAP_V4L2       # API: CAP_ANY or CAP_DSHOW etc...
-#EXPOSURE    = 0                 # Zero for automatic exposure
-#EXPOSURE    = 2400                 # Zero for automatic exposure
-#TEXT_FONT   = QFont("Courier", 10)
-
-#camera_num  = 1                 # Default camera (first in list)
-#image_queue = Queue.Queue()     # Queue to hold images
-#capturing   = True              # Flag to indicate capturing
-
-
-#Signal = QtCore.pyqtSignal
-#Slot = QtCore.pyqtSlot
-
-
+import time
 
 SAMPLING_TIME = 1
-
 
 class Camera():
     def __init__(self):
