@@ -13,7 +13,7 @@ import random
 import string
 import pyqtgraph
 import threading
-
+import queue as Queue
 from camera import *
 
 

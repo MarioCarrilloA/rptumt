@@ -1,7 +1,6 @@
 import cv2
 import logging
 import numpy as np
-import queue as Queue
 import time
 
 SAMPLING_TIME = 1
