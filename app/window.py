@@ -90,7 +90,7 @@ class MainWindow(QMainWindow, guiApp):
 
     def get_sample(self):
         self.console.log_msg(logging.INFO, "getting sample")
-        image = self.camera.grab_sample_image(camera_num)
+        image = self.camera.grab_sample_image()
         if image.all() == None:
             self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
         else:

@@ -117,11 +117,11 @@ class Camera():
         queue.put(img)
 
 
-    def grab_sample_image(self, cam_num):
-        cap = cv2.VideoCapture(cam_num-1 + self.cap_api)
+    def grab_sample_image(self):
+        cap = cv2.VideoCapture(self.camera_number - 1 + self.cap_api)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
-        if self.exposure:
+        if self.exposure_time:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
             cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
         else:
