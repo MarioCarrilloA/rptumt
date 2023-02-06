@@ -19,7 +19,7 @@ class Camera():
         self.camera_number = 1
 
 
-    def grab_images(self, queue):
+    def _create_video_capture(self):
         cap = cv2.VideoCapture(self.camera_number - 1 + self.cap_api)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
@@ -29,8 +29,11 @@ class Camera():
         else:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
 
-        #self.console.log_msg(logging.INFO, "capturing frames")
-        #self.console.log_msg(logging.INFO, "capturing frames")
+        return cap
+
+
+    def grab_images(self, queue):
+        cap = self._create_video_capture()
         logging.info("capturing frames")
         while self.capturing:
             if cap.grab():
@@ -50,16 +53,7 @@ class Camera():
 
 
     def grab_sample_image(self):
-        cap = cv2.VideoCapture(self.camera_number - 1 + self.cap_api)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
-        if self.exposure_time:
-            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
-        else:
-            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-
-        #self.console.log_msg(logging.INFO, "getting frame from camera")
+        cap = self._create_video_capture()
         logging.info("getting frame from camera")
         if cap.grab():
             retval, image = cap.retrieve(0)
