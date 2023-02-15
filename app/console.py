@@ -1,37 +1,25 @@
 # This code is base on:
 # https://gist.github.com/vsajip/a87bd7f4234510b4fd6bdcd4ffea376d
 
-from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
-from PyQt5.QtCore import *  # type: ignore
-from PyQt5.QtGui import *  # type: ignore
-from PyQt5.QtWidgets import *  # type: ignore
-from PyQt5.QtWidgets import (
-        QApplication,
-        QMainWindow,
-        QPushButton,
-        QLabel,
-        QVBoxLayout,
-        QWidget,
-        QLineEdit,
-        QFormLayout
-)
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QPlainTextEdit
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-
 
 Signal = QtCore.pyqtSignal
 Slot = QtCore.pyqtSlot
 
-#logging.basicConfig(level=logging.DEBUG)
-#logger = logging.getLogger(__name__)
-
 #
 # Used to generate random levels for logging.
 #
-LEVELS = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR,
-          logging.CRITICAL)
+LEVELS = (
+        logging.DEBUG,
+        logging.INFO,
+        logging.WARNING,
+        logging.ERROR,
+        logging.CRITICAL)
 
 
 # Signals need to be contained in a QObject or subclass in order to be correctly
@@ -54,15 +42,6 @@ class QtHandler(logging.Handler):
         s = self.format(record)
         self.signaller.signal.emit(s, record)
 
-#
-# This example uses QThreads, which means that the threads at the Python level
-# are named something like "Dummy-1". The function below gets the Qt name of the
-# current thread.
-#
-def ctname():
-    return QtCore.QThread.currentThread().objectName()
-
-
 
 # This example worker just outputs messages sequentially, interspersed with
 # random delays of the order of a few seconds.
@@ -70,8 +49,9 @@ def ctname():
 class Worker(QtCore.QObject):
     @Slot()
     def start(self):
-        extra = {'qThreadName': ctname() }
-        logger.debug('Started work', extra=extra)
+        #extra = {'qThreadName': ctname() }
+        #logger.debug('Started work', extra=extra)
+        logger.debug('Started work')
         i = 1
         # Let the thread run until interrupted. This allows reasonably clean
         # thread termination.
@@ -79,7 +59,8 @@ class Worker(QtCore.QObject):
             delay = 0.5 + random.random() * 2
             time.sleep(delay)
             level = random.choice(LEVELS)
-            logger.log(level, 'Message after delay of %3.1f: %d', delay, i, extra=extra)
+            #logger.log(level, 'Message after delay of %3.1f: %d', delay, i, extra=extra)
+            logger.log(level, 'Message after delay of %3.1f: %d', delay, i)
             i += 1
 
 
@@ -92,7 +73,8 @@ class Console(QPlainTextEdit):
         self.setReadOnly(True)
         self.handler = QtHandler(self.update_status)
         # Remember to use qThreadName rather than threadName in the format string.
-        fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
+        #fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
+        fs = '%(asctime)-5s %(levelname)-8s %(message)s'
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)
         logger.addHandler(self.handler)
@@ -146,20 +128,11 @@ class Console(QPlainTextEdit):
         # information from the record to format the message in an appropriate
         # color according to its severity (level).
         #level = random.choice(LEVELS)
-        extra = {'qThreadName': ctname() }
-        logger.log(level, msg, extra=extra)
+        #extra = {'qThreadName': ctname() }
+        #logger.log(level, msg, extra=extra)
+        logger.log(level, msg)
 
 
-
-
-    @Slot()
-    def manual_update(self):
-        # This function uses the formatted message passed in, but also uses
-        # information from the record to format the message in an appropriate
-        # color according to its severity (level).
-        level = random.choice(LEVELS)
-        extra = {'qThreadName': ctname() }
-        logger.log(level, 'Manually logged!', extra=extra)
 
     @Slot()
     def clear_display(self):
