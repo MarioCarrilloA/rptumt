@@ -110,7 +110,7 @@ class guiApp(object):
         self.listView.setObjectName(u"listView")
         self.listView.setGeometry(QRect(10, 25, 260, 345))
         #self.gBoxSamples.setEnabled(False)
-        self.listView.itemClicked.connect(self.listwidgetclicked)
+        self.listView.itemClicked.connect(self.clicked_list)
 
         # status information
         self.gstatus_info = QGroupBox(self.centralwidget)

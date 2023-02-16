@@ -22,28 +22,16 @@ class MainWindow(QMainWindow, guiApp):
         super().__init__()
         self.setupUi(self)
 
-        #f = QtGui.QFont('nosuchfont')
-        #f.setStyleHint(f.Monospace)
-        #self.console.setFont(f)
         self.console.setReadOnly(True)
-        # Remember to use qThreadName rather than threadName in the format string.
-        #fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
-        #formatter = logging.Formatter(fs)
-        # Set up to terminate the QThread when we exit
         app.aboutToQuit.connect(self.console.force_quit)
 
         # Lay out all the widgets
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.console)
 
-        # Connect the non-worker slots and signals
-
         # Start a new worker thread and connect the slots for the worker
         self.console.start_thread()
         self.sampling_button.clicked.connect(self.take_sample)
-
-        # DISABLE BUTTON
-        # Once started, the button should be disabled
 
         # MONITORING
         self.monitor_timer = QTimer(self)
@@ -83,10 +71,6 @@ class MainWindow(QMainWindow, guiApp):
         self.display_image(img, self.disp, 1)
         pass
 
-#    def get_random_id(self, length):
-#        # choose from all lowercase letter
-#        letters = string.ascii_lowercase
-#        return ''.join(random.choice(letters) for i in range(length))
 
     def take_sample(self):
         self.console.log_msg(logging.INFO, "getting sample")
@@ -95,18 +79,18 @@ class MainWindow(QMainWindow, guiApp):
             self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
         else:
             now = datetime.now()
-            #sample_id = self.get_random_id(6)
             image_name = "img_" + now.strftime("%d_%m_%Y-%H_%M_%S")
             self.sampled_images.update({image_name: image})
-            #self.listView.addItem(QListWidgetItem(image_name))
             self.listView.insertItem(0, QListWidgetItem(image_name))
 
-    def listwidgetclicked(self, item):
+
+    def clicked_list(self, item):
         image_key = item.text()
         print(image_key)
         img = self.sampled_images[image_key]
         self.image_queue.put(img)
         self.show_image(self.image_queue, self.disp, self.display_scale)
+
 
     def update_plot(self):
         self.console.log_msg(logging.INFO, "updating plot")
@@ -125,6 +109,7 @@ class MainWindow(QMainWindow, guiApp):
             # Update info
             self.last_point.setText("{:.6f}".format(data))
             self.total_samples.setText(str(len(self.data_x)))
+
 
     def start_monitoring(self):
         self.console.log_msg(logging.INFO, "Starting loop")
@@ -145,6 +130,7 @@ class MainWindow(QMainWindow, guiApp):
 
         self.console.log_msg(logging.INFO, "monitor process finished")
 
+
     def monitor(self):
         if (self.monitor_running == False):
             self.console.log_msg(logging.INFO, "starting monitoring process ...")
@@ -162,12 +148,12 @@ class MainWindow(QMainWindow, guiApp):
             self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
             self.monitor_timer.stop()
 
+
     def liveview(self):
         #global capturing
         if (self.liveview_enabled == False):
             self.console.log_msg(logging.WARNING,
                 "long exposure of the culture to light may affect the incubation process.")
-            #capturing = True
             self.camera.enable_capture()
             self.console.log_msg(logging.INFO, "starting live view session ...")
             self.timer = QTimer(self)           # Timer to trigger display
@@ -182,13 +168,9 @@ class MainWindow(QMainWindow, guiApp):
             if self.capture_thread.is_alive():
                 self.liveview_enabled = True
                 self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Stop live view", None))
-            #else:
-            #    self.log_msg(logging.ERROR, "live view session cancelled!")
         else:
             self.console.log_msg(logging.INFO, "stopping live view session...")
             self.liveview_enabled = False
-            #global capturing
-            #capturing = False
             self.camera.disable_capture()
             print("waiting for thread")
             self.capture_thread.join()
@@ -196,8 +178,6 @@ class MainWindow(QMainWindow, guiApp):
             self.show_default_view()
             self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
             self.timer.stop()
-            #time.sleep(3)
-            #self.show_default_view()
 
 
     # Fetch camera image from queue, and display it
@@ -207,6 +187,7 @@ class MainWindow(QMainWindow, guiApp):
             if image is not None and len(image) > 0:
                 img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                 self.display_image(img, display, scale)
+
 
     # Display an image, reduce size if required
     def display_image(self, img, display, scale=1):
@@ -219,28 +200,23 @@ class MainWindow(QMainWindow, guiApp):
                       disp_bpl, self.img_format)
         display.setImage(qimg)
 
-    # Handle sys.stdout.write: update text display
-#    def write(self, text):
-#        self.text_update.emit(str(text))
+
+#    # Append to text display
+#    def append_text(self, text):
+#        cur = self.textbox.textCursor()     # Move cursor to end of text
+#        cur.movePosition(QTextCursor.End)
+#        s = str(text)
+#        while s:
+#            head,sep,s = s.partition("\n")  # Split line at LF
+#            cur.insertText(head)            # Insert text at cursor
+#            if sep:                         # New line if LF
+#                cur.insertBlock()
+#        self.textbox.setTextCursor(cur)     # Update visible cursor
+
+
+#    # Window is closing: stop video capture
+#    def closeEvent(self, event):
+#        global capturing
+#        capturing = False
+#        #self.capture_thread.join()
 #
-#    def flush(self):
-#        pass
-
-    # Append to text display
-    def append_text(self, text):
-        cur = self.textbox.textCursor()     # Move cursor to end of text
-        cur.movePosition(QTextCursor.End)
-        s = str(text)
-        while s:
-            head,sep,s = s.partition("\n")  # Split line at LF
-            cur.insertText(head)            # Insert text at cursor
-            if sep:                         # New line if LF
-                cur.insertBlock()
-        self.textbox.setTextCursor(cur)     # Update visible cursor
-
-    # Window is closing: stop video capture
-    def closeEvent(self, event):
-        global capturing
-        capturing = False
-        #self.capture_thread.join()
-

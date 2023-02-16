@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import time
 
+
 SAMPLING_TIME = 1
 
 class Camera():
@@ -42,8 +43,8 @@ class Camera():
                 else:
                     time.sleep(self.cycle_time / 1000.0)
             else:
-                #logging.error("cannot grab frames from camera, session cancelled!")
-                self.console.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
+                logging.error("cannot grab frames from camera, session cancelled!")
+                #self.console.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
                 break
         cap.release()
 

@@ -109,7 +109,6 @@ class QtHandler(logging.Handler):
 class Worker(QtCore.QObject):
     @Slot()
     def start(self):
-        print("I AM SLOT********************")
         logger.debug('Started work')
         i = 1
         while not QtCore.QThread.currentThread().isInterruptionRequested():
