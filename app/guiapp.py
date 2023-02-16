@@ -152,7 +152,7 @@ class guiApp(object):
         self.monitor_button.setObjectName(u"monitor_button")
         self.monitor_button.setGeometry(QRect(10, 80, 130, 35))
         self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
-        self.monitor_button.clicked.connect(self.monitoring)
+        self.monitor_button.clicked.connect(self.monitor)
         self.liveview_button = QPushButton(self.gBoxControl)
         self.liveview_button.setObjectName(u"liveview_button")
         self.liveview_button.setGeometry(QRect(10, 120, 130, 35))

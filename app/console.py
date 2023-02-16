@@ -11,58 +11,6 @@ logger = logging.getLogger(__name__)
 Signal = QtCore.pyqtSignal
 Slot = QtCore.pyqtSlot
 
-#
-# Used to generate random levels for logging.
-#
-LEVELS = (
-        logging.DEBUG,
-        logging.INFO,
-        logging.WARNING,
-        logging.ERROR,
-        logging.CRITICAL)
-
-
-# Signals need to be contained in a QObject or subclass in order to be correctly
-# initialized.
-#
-class Signaller(QtCore.QObject):
-    signal = Signal(str, logging.LogRecord)
-
-
-# You specify the slot function to do whatever GUI updates you want. The handler
-# doesn't know or care about specific UI elements.
-#
-class QtHandler(logging.Handler):
-    def __init__(self, slotfunc, *args, **kwargs):
-        super(QtHandler, self).__init__(*args, **kwargs)
-        self.signaller = Signaller()
-        self.signaller.signal.connect(slotfunc)
-
-    def emit(self, record):
-        s = self.format(record)
-        self.signaller.signal.emit(s, record)
-
-
-# This example worker just outputs messages sequentially, interspersed with
-# random delays of the order of a few seconds.
-#
-class Worker(QtCore.QObject):
-    @Slot()
-    def start(self):
-        #extra = {'qThreadName': ctname() }
-        #logger.debug('Started work', extra=extra)
-        logger.debug('Started work')
-        i = 1
-        # Let the thread run until interrupted. This allows reasonably clean
-        # thread termination.
-        while not QtCore.QThread.currentThread().isInterruptionRequested():
-            delay = 0.5 + random.random() * 2
-            time.sleep(delay)
-            level = random.choice(LEVELS)
-            #logger.log(level, 'Message after delay of %3.1f: %d', delay, i, extra=extra)
-            logger.log(level, 'Message after delay of %3.1f: %d', delay, i)
-            i += 1
-
 
 class Console(QPlainTextEdit):
     def __init__(self, *args):
@@ -132,9 +80,47 @@ class Console(QPlainTextEdit):
         #logger.log(level, msg, extra=extra)
         logger.log(level, msg)
 
-
-
     @Slot()
     def clear_display(self):
         self.console.clear()
+
+
+# Allows object communication
+class Communicator(QtCore.QObject):
+    signal = Signal(str, logging.LogRecord)
+
+
+# You specify the slot function to do whatever GUI updates you want. The handler
+# doesn't know or care about specific UI elements.
+class QtHandler(logging.Handler):
+    def __init__(self, slotfunc, *args, **kwargs):
+        super(QtHandler, self).__init__(*args, **kwargs)
+        self.communicator = Communicator()
+        self.communicator.signal.connect(slotfunc)
+
+    def emit(self, record):
+        s = self.format(record)
+        self.communicator.signal.emit(s, record)
+
+
+# This example worker just outputs messages sequentially, interspersed with
+# random delays of the order of a few seconds.
+#
+class Worker(QtCore.QObject):
+    @Slot()
+    def start(self):
+        print("I AM SLOT********************")
+        logger.debug('Started work')
+        i = 1
+        while not QtCore.QThread.currentThread().isInterruptionRequested():
+            delay = 0.5 + random.random() * 2
+            time.sleep(delay)
+            level = random.choice(LEVELS)
+            logger.log(level, 'Message after delay of %3.1f: %d', delay, i)
+            i += 1
+
+
+
+
+
 

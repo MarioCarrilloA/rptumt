@@ -22,15 +22,15 @@ class MainWindow(QMainWindow, guiApp):
         super().__init__()
         self.setupUi(self)
 
-        f = QtGui.QFont('nosuchfont')
-        f.setStyleHint(f.Monospace)
-        self.console.setFont(f)
+        #f = QtGui.QFont('nosuchfont')
+        #f.setStyleHint(f.Monospace)
+        #self.console.setFont(f)
         self.console.setReadOnly(True)
         # Remember to use qThreadName rather than threadName in the format string.
-        fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
-        formatter = logging.Formatter(fs)
+        #fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
+        #formatter = logging.Formatter(fs)
         # Set up to terminate the QThread when we exit
-        app.aboutToQuit.connect(self.force_quit)
+        app.aboutToQuit.connect(self.console.force_quit)
 
         # Lay out all the widgets
         layout = QtWidgets.QVBoxLayout(self)
@@ -39,8 +39,8 @@ class MainWindow(QMainWindow, guiApp):
         # Connect the non-worker slots and signals
 
         # Start a new worker thread and connect the slots for the worker
-        self.start_thread()
-        self.sampling_button.clicked.connect(self.get_sample)
+        self.console.start_thread()
+        self.sampling_button.clicked.connect(self.take_sample)
 
         # DISABLE BUTTON
         # Once started, the button should be disabled
@@ -83,22 +83,23 @@ class MainWindow(QMainWindow, guiApp):
         self.display_image(img, self.disp, 1)
         pass
 
-    def get_random_id(self, length):
-        # choose from all lowercase letter
-        letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
+#    def get_random_id(self, length):
+#        # choose from all lowercase letter
+#        letters = string.ascii_lowercase
+#        return ''.join(random.choice(letters) for i in range(length))
 
-    def get_sample(self):
+    def take_sample(self):
         self.console.log_msg(logging.INFO, "getting sample")
         image = self.camera.grab_sample_image()
         if image.all() == None:
             self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
         else:
             now = datetime.now()
-            sample_id = self.get_random_id(6)
-            image_name = sample_id + "_" + now.strftime("%d_%m_%Y-%H_%M_%S")
+            #sample_id = self.get_random_id(6)
+            image_name = "img_" + now.strftime("%d_%m_%Y-%H_%M_%S")
             self.sampled_images.update({image_name: image})
-            self.listView.addItem(QListWidgetItem(image_name))
+            #self.listView.addItem(QListWidgetItem(image_name))
+            self.listView.insertItem(0, QListWidgetItem(image_name))
 
     def listwidgetclicked(self, item):
         image_key = item.text()
@@ -144,7 +145,7 @@ class MainWindow(QMainWindow, guiApp):
 
         self.console.log_msg(logging.INFO, "monitor process finished")
 
-    def monitoring(self):
+    def monitor(self):
         if (self.monitor_running == False):
             self.console.log_msg(logging.INFO, "starting monitoring process ...")
             self.monitor_timer = QTimer(self)
@@ -219,11 +220,11 @@ class MainWindow(QMainWindow, guiApp):
         display.setImage(qimg)
 
     # Handle sys.stdout.write: update text display
-    def write(self, text):
-        self.text_update.emit(str(text))
-
-    def flush(self):
-        pass
+#    def write(self, text):
+#        self.text_update.emit(str(text))
+#
+#    def flush(self):
+#        pass
 
     # Append to text display
     def append_text(self, text):
@@ -242,29 +243,4 @@ class MainWindow(QMainWindow, guiApp):
         global capturing
         capturing = False
         #self.capture_thread.join()
-
-
-    def start_thread(self):
-        self.worker = Worker()
-        self.worker_thread = QtCore.QThread()
-        self.worker.setObjectName('Worker')
-        self.worker_thread.setObjectName('WorkerThread')  # for qThreadName
-        self.worker.moveToThread(self.worker_thread)
-        # This will start an event loop in the worker thread
-        self.worker_thread.start()
-
-    def kill_thread(self):
-        # Just tell the worker to stop, then tell it to quit and wait for that
-        # to happen
-        self.worker_thread.requestInterruption()
-        if self.worker_thread.isRunning():
-            self.worker_thread.quit()
-            self.worker_thread.wait()
-        else:
-            print('worker has already exited.')
-
-    def force_quit(self):
-        # For use when the window is closed
-        if self.worker_thread.isRunning():
-            self.kill_thread()
 
