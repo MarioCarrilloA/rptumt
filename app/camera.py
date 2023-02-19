@@ -1,6 +1,8 @@
 import cv2
 import logging
 import numpy as np
+from queue import Queue
+#from multiprocessing import Queue
 import time
 
 
@@ -17,6 +19,7 @@ class Camera():
         self.cycle_time = 50
         self.exposure_time = 0 # Zero for automatic exposure time
         self.camera_number = 1
+        self.image_queue = Queue()
 
 
     def _create_video_capture(self):
@@ -32,24 +35,23 @@ class Camera():
         return cap
 
 
-    def grab_images(self, queue):
+    def grab_images(self):
         cap = self._create_video_capture()
         logging.info("capturing frames")
         while self.capturing:
             if cap.grab():
                 retval, image = cap.retrieve(0)
-                if image is not None and queue.qsize() < 2:
-                    queue.put(image)
+                if image is not None and self.image_queue.qsize() < 2:
+                    self.image_queue.put(image)
                 else:
                     time.sleep(self.cycle_time / 1000.0)
             else:
                 logging.error("cannot grab frames from camera, session cancelled!")
-                #self.console.log_msg(logging.ERROR, "cannot grab frames from camera, session cancelled!")
                 break
         cap.release()
 
         img = np.zeros([self.heigh, self.width, 3], dtype=np.uint8)
-        queue.put(img)
+        self.image_queue.put(img)
 
 
     def grab_sample_image(self):
@@ -58,13 +60,13 @@ class Camera():
         if cap.grab():
             retval, image = cap.retrieve(0)
             cap.release()
-            if image is not None:
-                return image
-            else:
-                None
+            return image
+        return None
+
 
     def disable_capture(self):
         self.capturing = False
+
 
     def enable_capture(self):
         self.capturing = True

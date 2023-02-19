@@ -20,8 +20,6 @@ class Console(QPlainTextEdit):
         self.setFont(f)
         self.setReadOnly(True)
         self.handler = QtHandler(self.update_status)
-        # Remember to use qThreadName rather than threadName in the format string.
-        #fs = '%(asctime)s %(qThreadName)-5s %(levelname)-8s %(message)s'
         fs = '%(asctime)-5s %(levelname)-8s %(message)s'
         formatter = logging.Formatter(fs)
         self.handler.setFormatter(formatter)

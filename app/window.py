@@ -13,7 +13,6 @@ import random
 import string
 import pyqtgraph
 import threading
-import queue as Queue
 from camera import *
 
 
@@ -44,7 +43,8 @@ class MainWindow(QMainWindow, guiApp):
         self.msu_line = self.status_chart.plot(self.data_x, self.data_y, name="measurements",
                     pen='b', symbol='o', symbolSize=5)
 
-        self.monitor_queue = Queue.Queue()
+        self.monitor_queue = Queue()
+        self.local_image_queue = Queue()
         self.liveview_enabled = False
 
         # Camera settings
@@ -53,7 +53,6 @@ class MainWindow(QMainWindow, guiApp):
 
         # Display settings
         self.img_format = QImage.Format_RGB888
-        self.image_queue = Queue.Queue()
         self.display_scale = 1
         self.display_time = 50
 
@@ -69,13 +68,12 @@ class MainWindow(QMainWindow, guiApp):
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
         self.display_image(img, self.disp, 1)
-        pass
 
 
     def take_sample(self):
         self.console.log_msg(logging.INFO, "getting sample")
         image = self.camera.grab_sample_image()
-        if image.all() == None:
+        if image is None:
             self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
         else:
             now = datetime.now()
@@ -86,10 +84,9 @@ class MainWindow(QMainWindow, guiApp):
 
     def clicked_list(self, item):
         image_key = item.text()
-        print(image_key)
         img = self.sampled_images[image_key]
-        self.image_queue.put(img)
-        self.show_image(self.image_queue, self.disp, self.display_scale)
+        self.local_image_queue.put(img)
+        self.show_image(self.local_image_queue, self.disp, self.display_scale)
 
 
     def update_plot(self):
@@ -112,11 +109,10 @@ class MainWindow(QMainWindow, guiApp):
 
 
     def start_monitoring(self):
-        self.console.log_msg(logging.INFO, "Starting loop")
+        self.console.log_msg(logging.INFO, "Starting video loop")
         count = 0
         measurement_flag = True
         while self.monitor_running:
-            self.console.log_msg(logging.INFO, "loop")
             if measurement_flag == True:
                 self.console.log_msg(logging.INFO, "getting measurement")
                 avg_area = random.uniform(0.1, 1.0)
@@ -150,7 +146,6 @@ class MainWindow(QMainWindow, guiApp):
 
 
     def liveview(self):
-        #global capturing
         if (self.liveview_enabled == False):
             self.console.log_msg(logging.WARNING,
                 "long exposure of the culture to light may affect the incubation process.")
@@ -158,10 +153,9 @@ class MainWindow(QMainWindow, guiApp):
             self.console.log_msg(logging.INFO, "starting live view session ...")
             self.timer = QTimer(self)           # Timer to trigger display
             self.timer.timeout.connect(lambda:
-            self.show_image(self.image_queue, self.disp, self.display_scale))
+            self.show_image(self.camera.image_queue, self.disp, self.display_scale))
             self.timer.start(self.display_time)
-            self.capture_thread = threading.Thread(target=self.camera.grab_images,
-                    args=(self.image_queue,))
+            self.capture_thread = threading.Thread(target=self.camera.grab_images)
 
             self.capture_thread.start()
             time.sleep(1)
@@ -201,22 +195,3 @@ class MainWindow(QMainWindow, guiApp):
         display.setImage(qimg)
 
 
-#    # Append to text display
-#    def append_text(self, text):
-#        cur = self.textbox.textCursor()     # Move cursor to end of text
-#        cur.movePosition(QTextCursor.End)
-#        s = str(text)
-#        while s:
-#            head,sep,s = s.partition("\n")  # Split line at LF
-#            cur.insertText(head)            # Insert text at cursor
-#            if sep:                         # New line if LF
-#                cur.insertBlock()
-#        self.textbox.setTextCursor(cur)     # Update visible cursor
-
-
-#    # Window is closing: stop video capture
-#    def closeEvent(self, event):
-#        global capturing
-#        capturing = False
-#        #self.capture_thread.join()
-#
