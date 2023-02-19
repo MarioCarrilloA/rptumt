@@ -157,7 +157,7 @@ class guiApp(object):
         self.liveview_button.setObjectName(u"liveview_button")
         self.liveview_button.setGeometry(QRect(10, 120, 130, 35))
         self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
-        self.liveview_button.clicked.connect(self.liveview)
+        self.liveview_button.clicked.connect(self.start_liveview)
 
 
         # Menu bar

@@ -145,7 +145,7 @@ class MainWindow(QMainWindow, guiApp):
             self.monitor_timer.stop()
 
 
-    def liveview(self):
+    def start_liveview(self):
         if (self.liveview_enabled == False):
             self.console.log_msg(logging.WARNING,
                 "long exposure of the culture to light may affect the incubation process.")
