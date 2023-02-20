@@ -72,14 +72,19 @@ class MainWindow(QMainWindow, guiApp):
 
     def take_sample(self):
         self.console.log_msg(logging.INFO, "getting sample")
-        image = self.camera.grab_sample_image()
-        if image is None:
-            self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
+        now = datetime.now()
+        image_name = "img_" + now.strftime("%d_%m_%Y-%H_%M_%S")
+        if self.liveview_enabled == True:
+            image = self.camera.image_queue.get()
+            if image is not None and len(image) > 0:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         else:
-            now = datetime.now()
-            image_name = "img_" + now.strftime("%d_%m_%Y-%H_%M_%S")
-            self.sampled_images.update({image_name: image})
-            self.listView.insertItem(0, QListWidgetItem(image_name))
+            image = self.camera.grab_sample_image()
+            if image is None:
+                self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
+                return None
+        self.sampled_images.update({image_name: image})
+        self.listView.insertItem(0, QListWidgetItem(image_name))
 
 
     def clicked_list(self, item):
