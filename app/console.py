@@ -44,8 +44,6 @@ class Console(QPlainTextEdit):
         self.worker_thread.start()
 
     def kill_thread(self):
-        # Just tell the worker to stop, then tell it to quit and wait for that
-        # to happen
         self.worker_thread.requestInterruption()
         if self.worker_thread.isRunning():
             self.worker_thread.quit()
@@ -54,12 +52,9 @@ class Console(QPlainTextEdit):
             print('worker has already exited.')
 
     def force_quit(self):
-        # For use when the window is closed
         if self.worker_thread.isRunning():
             self.kill_thread()
 
-    # The functions below update the UI and run in the main thread because
-    # that's where the slots are set up
 
     @Slot(str, logging.LogRecord)
     def update_status(self, status, record):
@@ -70,12 +65,6 @@ class Console(QPlainTextEdit):
 
     @Slot()
     def log_msg(self, level, msg):
-        # This function uses the formatted message passed in, but also uses
-        # information from the record to format the message in an appropriate
-        # color according to its severity (level).
-        #level = random.choice(LEVELS)
-        #extra = {'qThreadName': ctname() }
-        #logger.log(level, msg, extra=extra)
         logger.log(level, msg)
 
     @Slot()
@@ -88,8 +77,6 @@ class Communicator(QtCore.QObject):
     signal = Signal(str, logging.LogRecord)
 
 
-# You specify the slot function to do whatever GUI updates you want. The handler
-# doesn't know or care about specific UI elements.
 class QtHandler(logging.Handler):
     def __init__(self, slotfunc, *args, **kwargs):
         super(QtHandler, self).__init__(*args, **kwargs)
@@ -101,9 +88,6 @@ class QtHandler(logging.Handler):
         self.communicator.signal.emit(s, record)
 
 
-# This example worker just outputs messages sequentially, interspersed with
-# random delays of the order of a few seconds.
-#
 class Worker(QtCore.QObject):
     @Slot()
     def start(self):

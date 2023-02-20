@@ -132,12 +132,17 @@ class MainWindow(QMainWindow, guiApp):
         self.console.log_msg(logging.INFO, "monitor process finished")
 
 
+    def update_state(self):
+        self.update_plot()
+        self.take_sample()
+
+
     def monitor(self):
         if (self.monitor_running == False):
             self.console.log_msg(logging.INFO, "starting monitoring process ...")
             self.monitor_timer = QTimer(self)
-            self.monitor_timer.timeout.connect(lambda:self.update_plot())
-            self.monitor_timer.start(1000)
+            self.monitor_timer.timeout.connect(lambda:self.update_state())
+            self.monitor_timer.start(5000)
             self.monitor_thread = threading.Thread(target=self.start_monitoring)
             self.monitor_thread.start()
             self.monitor_running = True
