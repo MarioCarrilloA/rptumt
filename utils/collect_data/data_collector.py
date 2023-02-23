@@ -59,22 +59,11 @@ def create_dataset_dir():
 
 def main():
     # Setup GPIO for led
+    print("Data collection V2.0")
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     GPIO.setup(GPIO_NUM, GPIO.OUT)
     turn_off_led()
-    print("starting the camera...")
-    camera = PiCamera()
-    camera.shutter_speed = SHUTTER_SPEED
-    camera.resolution = RESOLUTION
-    print("Shutter speed", camera.shutter_speed)
-
-    # Camera preview
-    root = tkinter.Tk()
-    ws = root.winfo_screenwidth()
-    hs = root.winfo_screenheight()
-    camera.preview_fullscreen = False
-    camera.preview_window = (round(ws/2), 160, 640, 360) 
 
     outdir = create_dataset_dir()
     wait_counter = 0
@@ -82,6 +71,19 @@ def main():
     samples = 1
     while (samples <= TOTAL_NUM_SAMPLES):
         if (init_process_flag == True or wait_counter == TIME_PER_CYCLE):
+            print("starting the camera...")
+            camera = PiCamera()
+            camera.shutter_speed = SHUTTER_SPEED
+            camera.resolution = RESOLUTION
+            print("Shutter speed", camera.shutter_speed)
+
+            # Camera preview
+            root = tkinter.Tk()
+            ws = root.winfo_screenwidth()
+            hs = root.winfo_screenheight()
+            camera.preview_fullscreen = False
+            camera.preview_window = (round(ws/2), 160, 640, 360)
+
             wait_counter = 0
             if (init_process_flag == True):
                 print("Starting first cycle")
@@ -100,18 +102,18 @@ def main():
                 camera.capture(outimg)
                 # This time is random to avoid synchronization with the tube
                 # rotation and therefore always get images from different views
-                time_per_sample = round(random.uniform(0.1, 1.2), 2)
+                time_per_sample = round(random.uniform(0.1, 0.8), 2)
                 print(str(time_per_sample) + ": " + outimg)
                 time.sleep(time_per_sample)
                 samples+=1
             turn_off_led()
+            # Close camera
             camera.stop_preview()
+            camera.close()
         print("second  " + str(wait_counter) + " of " + str(TIME_PER_CYCLE) + " for the next cycle")
         wait_counter+=1
         time.sleep(1)
 
-    # Close camera
-    camera.close()
     print("Dataset created successfully!")
     print("path:", outdir)
 
