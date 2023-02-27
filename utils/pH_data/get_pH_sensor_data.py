@@ -1,5 +1,4 @@
-# Software to handle HAMEG Instruments,HM8143,2.41
-# power supply in remote mode
+# Software to handle Sentron pH sensor
 
 import serial
 import time
@@ -8,14 +7,12 @@ import numpy as np
 import signal
 import sys
 
+from colorama import init as colorama_init
+from colorama import Fore
+from colorama import Style
 
-DEFAULT_CURRENT = 0.20
-DEFAULT_VOLTAGE = 7.40
-INIT_VOLTAGE_SEQ = 7.80
-STOP_VOLTAGE_SEQ = 9.00
-STEP_VOLTAGE_SEQ = 0.24
 
-class serialPowerSupply():
+class serialpHSensor():
     def __init__(self):
         self.serial_port = None
 
@@ -38,9 +35,17 @@ class serialPowerSupply():
         self.serial_port.write(cmd.encode("UTF-8"))
         time.sleep(0.2)
         data = self.readline_cr()
-        #self.serial_port.flush()
-
         return data
+
+    def start_calibration(self):
+        msg = self.command("CLR!\r")
+        return msg
+
+    def end_calibration(self):
+        msg = self.command("QIT!\r")
+        return msg
+
+
 
     def start_redundant_calibration(self):
         data = self.loop_cmd("CLR!\r")
@@ -48,14 +53,7 @@ class serialPowerSupply():
             print("Measured voltage: " + data)
         else:
             print("Measured voltage: UNKNOWN!")
-
-
-    def start_calibration(self):
-        print("Start calibration")
-        msg = self.command("CLR!\r")
-        print(msg)
-
-
+    
 
     # Possible baudrate
     # - 9600
@@ -68,22 +66,9 @@ class serialPowerSupply():
             parity=serial.PARITY_NONE,
             bytesize=8,
             stopbits=1,
-            timeout=1
+            timeout=5
         )
         self.print_id()
-
-
-
-    def finish(self):
-        print("Finish")
-        self.disable_mixed_mode()
-        self.serial_port.flush()
-        self.serial_port.close()
-        sys.exit(0)
-
-
-    def set_voltage(self, voltage):
-        msg = self.command(voltage)
 
 
     def loop_cmd(self, cmd):
@@ -97,97 +82,50 @@ class serialPowerSupply():
         return data
 
 
-    def print_id(self):
-        print("Looking for device id")
-        data = self.loop_cmd("*IDN?")
-        if (len(data) != 0):
-            print(data)
-        else:
-            print("error: device does not answer")
-
-
-    def get_voltage(self):
-        data = self.loop_cmd("MU1")
-        if (len(data) != 0):
-            print("Measured voltage: " + data)
-        else:
-            print("Measured voltage: UNKNOWN!")
-
-
-    def print_status(self):
-        found_flag = False
-        for i in range(0, 10):
-            msg = self.command("STA?")
-            if (len(msg) != 0):
-                found_flag = True
-                print(msg)
-                break
-        if (found_flag == False):
-            print("error: Unknown device id")
-
-
-    def run_voltage_sequence(self):
-        flag_output = False
-        for v in np.arange(INIT_VOLTAGE_SEQ, STOP_VOLTAGE_SEQ, STEP_VOLTAGE_SEQ):
-            strv = "{:.2f}".format(v)
-            voltage = "SU1:" + strv
-            print("Set voltage: " + strv)
-            self.set_voltage(voltage)
-            if flag_output == False:
-                flag_output = True
-                self.enable_output()
-            self.get_voltage()
-            time.sleep(1)
-
-
-    def set_default_current(self):
-        strcurr = str(DEFAULT_CURRENT)
-        print("Set default current: " + strcurr)
-        current = "SI1:" + strcurr
-        msg = self.command(current)
-
-
-    def enable_output(self):
-        print("Enable output")
-        msg = self.command("OP1")
-
-
-    def disable_output(self):
-        print("Disable output")
-        yymsg = self.command("OP0")
-
-
-    def finish(self):
-        print("Finish")
-        self.disable_mixed_mode()
-        self.serial_port.flush()
-        self.serial_port.close()
-        sys.exit(0)
-
-
-    def clear_device(self):
-        """ This funcion cleans all configurations in the
-        device. The voltage and currnet are set to 0 and the
-        outputs are switched off.
-        """
-        print("Clear device")
-        msg = self.command("CLR")
-
-
 def main():
-    s = serialPowerSupply()
-    s.init_control()
-    s.start_calibration()
-    s.start_redundant_calibration()
+    colorama_init()
+    s = serialpHSensor()
+
+    while True:
+        print(f"{Fore.CYAN}1. Start Calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}2. End Calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}3. Init pH 7 calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}5. Measure pH values (loop){Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}5. Exit{Style.RESET_ALL}!\n")
+        option = input("What would you like to do?: ")
+        if option == "1":
+            print(f"\n{Fore.GREEN}Starting calibration...{Style.RESET_ALL}!\n")
+            msg = s.start_calibration()
+            if len(msg) == 0:
+                print(f"\n{Fore.RED}error: unsuccessful init calibration!{Style.RESET_ALL}!\n")
+            else:
+                print(msg)
+                print("done")
+
+        if option == "2":
+            print(f"\n{Fore.GREEN}End calibration...{Style.RESET_ALL}!\n")
+            msg = s.end_calibration()
+            if len(msg) == 0:
+                print(f"\n{Fore.RED}error: unsuccessful end calibration!{Style.RESET_ALL}!\n")
+            else:
+                print(msg)
+                print("done")
 
 
+        elif option == "2":
+            print(f"\n{Fore.GREEN}Init pH 7{Style.RESET_ALL}!\n")
+
+        elif option == "3":
+            print(f"\n{Fore.GREEN}Startibg loop to measure values{Style.RESET_ALL}!\n")
+
+        elif option == "4":
+            print(f"\n{Fore.GREEN}Exit!{Style.RESET_ALL}!\n")
+            break
+
+        else:
+            print(f"\n{Fore.RED}error: unknown option!{Style.RESET_ALL}!\n")
 
 
-    #s.enable_mixed_mode()
-    #s.set_default_current()
-    #s.run_voltage_sequence()
-    #s.disable_output()
-    #s.finish()
 
 if __name__ == "__main__":
     main()
