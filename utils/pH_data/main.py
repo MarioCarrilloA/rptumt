@@ -18,7 +18,11 @@ msg_help = dedent(
 def main():
     colorama_init()
     pH_sensor = serialpHSensor()
-    pH_sensor.init_control()
+    r = pH_sensor.init_control()
+    print("pH sensor init: " + str(r))
+    power_supply = serialPowerSupply()
+    r = power_supply.init_control()
+    print("Power supply device: " + str(r))
 
     print(msg_help)
     while True:

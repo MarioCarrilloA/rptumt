@@ -44,16 +44,15 @@ class serialPowerSupply():
 
 
     def init_control(self):
-        print("Init device......")
         self.serial_port = serial.Serial(
-            port='/dev/ttyUSB0',
+            port='/dev/ttyUSB1',
             baudrate=9600,
             parity=serial.PARITY_NONE,
             bytesize=8,
             stopbits=1,
             timeout=1
         )
-        self.print_id()
+        return self.get_id()
 
 
     def enable_mixed_mode(self):
@@ -99,13 +98,12 @@ class serialPowerSupply():
         return data
 
 
-    def print_id(self):
-        print("Looking for device id")
+    def get_id(self):
         data = self.loop_cmd("*IDN?")
         if (len(data) != 0):
-            print(data)
+            return data
         else:
-            print("error: device does not answer")
+            return "error: device does not answer"
 
 
     def get_voltage(self):
