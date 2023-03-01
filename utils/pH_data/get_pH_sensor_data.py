@@ -18,60 +18,57 @@ class serialpHSensor():
         self.serial_port = None
 
 
-    def readline_cr(self):
-        EOL = b'\r'
-        #EOL = b'3'
-        line = bytearray()
-        while True:
-            print("reading")
-            c = self.serial_port.read(1)
-            #print(c)
-            if c:
-                line += c
-                if line[-len(EOL):] == EOL:
-                    break
-            else:
-                break
-        return line.decode("UTF-8")
-
-
     def command(self, cmd):
-        print("Executed command: " + cmd)
-        #self.serial_port.write(cmd.encode("UTF-8"))
-        self.serial_port.write(cmd.encode())
-        #self.serial_port.write(cmd)
-        #time.sleep(60)
-        #data = self.readline_cr()
+        print("Executed command: " + str(cmd))
+        self.serial_port.write(serial.to_bytes(cmd))
         data = self.serial_port.readline()
-        #return data.decode("UTF-8")
-        return data.decode()
-        #print(data)
-        #data = self.serial_port.readline()
-        #print(data)
-
         return data
 
+
     def start_calibration(self):
-        msg = self.command('CLR!\r')
+        cmd = [67, 76, 82, 33, 13]
+        msg = self.command(cmd)
         return msg
+
 
     def init_pH7_calibration(self):
-        msg = self.command('113!\r')
+        cmd = [1, 1, 3, 33, 13]
+        msg = self.command(cmd)
         return msg
 
+
     def retrive_single_pH_value(self):
-        msg = self.command('999!\r')
+        cmd = [57, 57, 57, 33, 13]
+        msg = self.command(cmd)
         return msg
+
+    def retrive_temperature_value(self):
+        cmd = [55, 55, 55, 33, 13]
+        msg = self.command(cmd)
+        return msg
+
+
+    def decode_ph_signal_protocol(self, data):
+        A = int(data[0])
+        B = int(data[1])
+        C = int(data[2])
+        pH = float(int((A*4096) + (B*64) + C) * 0.001)
+        return "{:.4f}".format(pH)
+
+    def decode_temp_signal_protocol(self, data):
+        A = int(data[0])
+        B = int(data[1])
+        temp_F = float(int((A*64) + B) * 0.1)
+        temp_C = (temp_F - 32) * (5 / 9)
+        return "{:.2f}".format(temp_C)
 
 
     def end_calibration(self):
-        msg = self.command('QIT!\r')
+        cmd = [81, 73, 84, 33, 13]
+        msg = self.command(cmd)
         return msg
 
 
-    # Possible baudrate
-    # - 9600
-    # - 115200
     def init_control(self):
         print("Init device......")
         self.serial_port = serial.Serial(
@@ -80,11 +77,10 @@ class serialpHSensor():
             parity=serial.PARITY_NONE,
             bytesize=serial.EIGHTBITS,
             stopbits=serial.STOPBITS_ONE,
-            timeout=10
+            timeout=130
         )
         print("Serial port open:" + str(self.serial_port.is_open))
         print("\n")
-        #self.print_id()
 
 
     def loop_cmd(self, cmd):
@@ -105,13 +101,15 @@ def main():
 
     while True:
         print(f"{Fore.CYAN}1. Start Calibration{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}2. End Calibration{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}3. Init pH 7 calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}2. Init pH 7 calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}3. End Calibration{Style.RESET_ALL}!")
         print(f"{Fore.CYAN}4. Retrive single pH value{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}5. Measure pH values (loop){Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}6. Exit{Style.RESET_ALL}!\n")
+        print(f"{Fore.CYAN}5. Retrive temperature value(celsius){Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}6. Measure pH values (loop){Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}7. Exit{Style.RESET_ALL}!\n")
         option = input("What would you like to do?: ")
         print("Selected option:" + option)
+
         if option == "1":
             print(f"\n{Fore.GREEN}Starting calibration...{Style.RESET_ALL}!\n")
             msg = s.start_calibration()
@@ -119,19 +117,8 @@ def main():
                 print(f"\n{Fore.RED}error: no response init calibration!{Style.RESET_ALL}!\n")
             else:
                 print("Response: " + str(msg))
-            pass
 
         elif option == "2":
-            print(f"\n{Fore.GREEN}End calibration...{Style.RESET_ALL}!\n")
-            msg = s.end_calibration()
-            if len(msg) == 0:
-                print(f"\n{Fore.RED}error: no response for end calibration!{Style.RESET_ALL}!\n")
-            else:
-                print("Response: " + str(msg))
-
-            pass
-
-        elif option == "3":
             print(f"\n{Fore.GREEN}Init pH 7{Style.RESET_ALL}!\n")
             msg = s.init_pH7_calibration()
             if len(msg) == 0:
@@ -139,6 +126,13 @@ def main():
             else:
                 print("Response: " + str(msg))
 
+        elif option == "3":
+            print(f"\n{Fore.GREEN}End calibration...{Style.RESET_ALL}!\n")
+            msg = s.end_calibration()
+            if len(msg) == 0:
+                print(f"\n{Fore.RED}error: no response for end calibration!{Style.RESET_ALL}!\n")
+            else:
+                print("Response: " + str(msg))
 
         elif option == "4":
             print(f"\n{Fore.GREEN}Retrive pH value{Style.RESET_ALL}!\n")
@@ -147,14 +141,37 @@ def main():
                 print(f"\n{Fore.RED}error: no response for retrive pH value!{Style.RESET_ALL}!\n")
             else:
                 print("Response: " + str(msg))
-            print("Waiting for stabilization")
-            time.sleep(10)
+                tmp = ""
+                for i in range(0, len(msg)):
+                    tmp = tmp + str(msg[i]) + "  "
+
+                print("Response(dec): " + tmp)
+                pH = s.decode_ph_signal_protocol(msg)
+                print("\npH = " + pH)
 
 
         elif option == "5":
-            print(f"\n{Fore.GREEN}Starting loop to measure values{Style.RESET_ALL}!\n")
+            print(f"\n{Fore.GREEN}Retrive temperature{Style.RESET_ALL}!\n")
+            msg = s.retrive_temperature_value()
+            if len(msg) == 0:
+                print(f"\n{Fore.RED}error: no response for retrive temperature value!{Style.RESET_ALL}!\n")
+            else:
+                print("Response: " + str(msg))
+                tmp = ""
+                for i in range(0, len(msg)):
+                    tmp = tmp + str(msg[i]) + "  "
+
+                print("Response(dec): " + tmp)
+                temp = s.decode_temp_signal_protocol(msg)
+                print("\nTemperature (Celcius) = " + temp)
+
+
 
         elif option == "6":
+            print(f"\n{Fore.GREEN}Starting loop to measure values{Style.RESET_ALL}!\n")
+
+
+        elif option == "7":
             s.serial_port.close()
             print(f"\n{Fore.GREEN}Exit!{Style.RESET_ALL}!\n")
             break
