@@ -1,10 +1,26 @@
 from pHsensor import *
+from HM8143 import *
+from textwrap import dedent
+
+msg_help = dedent(
+        """
+        This program is designed for getting pH and temperature (celsius)
+        values from the ISFET pH-sensor kit (from the company: Sentron) and control
+        the voltage output from a power supply HM8143 in order to create a dataset.
+        It is very important to follow sequentially these steps to work correctly:
+
+        1) Connect the pH sensor to the board to obtain the /dev/ttyUSB0 device
+        2) Conncet the power supply to the board to obtain the /dev/ttyUSB1 devide
+        3) Select the option 1, 2, and 3 to calibarte the sensor
+        4) Check the results using option 4 and 5\n
+        """)
 
 def main():
     colorama_init()
-    s = serialpHSensor()
-    s.init_control()
+    pH_sensor = serialpHSensor()
+    pH_sensor.init_control()
 
+    print(msg_help)
     while True:
         print(f"{Fore.CYAN}1. Start Calibration{Style.RESET_ALL}!")
         print(f"{Fore.CYAN}2. Init pH 7 calibration{Style.RESET_ALL}!")
@@ -18,31 +34,34 @@ def main():
 
         if option == "1":
             print(f"\n{Fore.GREEN}Starting calibration...{Style.RESET_ALL}!\n")
-            msg = s.start_calibration()
+            msg = pH_sensor.start_calibration()
             if len(msg) == 0:
                 print(f"\n{Fore.RED}error: no response init calibration!{Style.RESET_ALL}!\n")
             else:
                 print("Response: " + str(msg))
 
+
         elif option == "2":
             print(f"\n{Fore.GREEN}Init pH 7{Style.RESET_ALL}!\n")
-            msg = s.init_pH7_calibration()
+            msg = pH_sensor.init_pH7_calibration()
             if len(msg) == 0:
                 print(f"\n{Fore.RED}error: no response from init ph7 calibration!{Style.RESET_ALL}!\n")
             else:
                 print("Response: " + str(msg))
 
+
         elif option == "3":
             print(f"\n{Fore.GREEN}End calibration...{Style.RESET_ALL}!\n")
-            msg = s.end_calibration()
+            msg = pH_sensor.end_calibration()
             if len(msg) == 0:
                 print(f"\n{Fore.RED}error: no response for end calibration!{Style.RESET_ALL}!\n")
             else:
                 print("Response: " + str(msg))
 
+
         elif option == "4":
             print(f"\n{Fore.GREEN}Retrive pH value{Style.RESET_ALL}!\n")
-            msg = s.retrive_single_pH_value()
+            msg = pH_sensor.retrive_single_pH_value()
             if len(msg) == 0:
                 print(f"\n{Fore.RED}error: no response for retrive pH value!{Style.RESET_ALL}!\n")
             else:
@@ -52,13 +71,13 @@ def main():
                     tmp = tmp + str(msg[i]) + "  "
 
                 print("Response(dec): " + tmp)
-                pH = s.decode_ph_signal_protocol(msg)
+                pH = pH_sensor.decode_ph_signal_protocol(msg)
                 print("\npH = " + pH)
 
 
         elif option == "5":
             print(f"\n{Fore.GREEN}Retrive temperature{Style.RESET_ALL}!\n")
-            msg = s.retrive_temperature_value()
+            msg = pH_sensor.retrive_temperature_value()
             if len(msg) == 0:
                 print(f"\n{Fore.RED}error: no response for retrive temperature value!{Style.RESET_ALL}!\n")
             else:
@@ -68,9 +87,8 @@ def main():
                     tmp = tmp + str(msg[i]) + "  "
 
                 print("Response(dec): " + tmp)
-                temp = s.decode_temp_signal_protocol(msg)
+                temp = pH_sensor.decode_temp_signal_protocol(msg)
                 print("\nTemperature (Celcius) = " + temp)
-
 
 
         elif option == "6":
@@ -78,7 +96,7 @@ def main():
 
 
         elif option == "7":
-            s.serial_port.close()
+            pH_sensor.serial_port.close()
             print(f"\n{Fore.GREEN}Exit!{Style.RESET_ALL}!\n")
             break
 
