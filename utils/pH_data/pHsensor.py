@@ -21,6 +21,7 @@ class serialpHSensor():
     def command(self, cmd):
         print("Executed command: " + str(cmd))
         self.serial_port.write(serial.to_bytes(cmd))
+        time.sleep(1)
         data = self.serial_port.readline()
         return data
 
@@ -49,16 +50,32 @@ class serialpHSensor():
 
 
     def decode_ph_signal_protocol(self, data):
-        A = int(data[0])
-        B = int(data[1])
-        C = int(data[2])
-        pH = float(int((A*4096) + (B*64) + C) * 0.001)
+        if (len(data) >= 3):
+            A = int(data[0])
+            B = int(data[1])
+            C = int(data[2])
+
+        elif (len(data) == 2):
+            A = int(data[0])
+            B = int(data[1])
+            C = 0
+
+        elif (len(data) == 1):
+            A = int(data[0])
+            B = 0
+            C = 0
+
+        pH = float(int((A * 4096) + (B * 64) + C) * 0.001)
         return "{:.4f}".format(pH)
 
     def decode_temp_signal_protocol(self, data):
-        A = int(data[0])
-        B = int(data[1])
-        temp_F = float(int((A*64) + B) * 0.1)
+        if (len(data) >= 2):
+            A = int(data[0])
+            B = int(data[1])
+        elif (len(data) == 1):
+            A = int(data[0])
+            B = 0
+        temp_F = float(int((A * 64) + B) * 0.1)
         temp_C = (temp_F - 32) * (5 / 9)
         return "{:.2f}".format(temp_C)
 

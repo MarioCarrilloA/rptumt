@@ -1,3 +1,6 @@
+import sys
+import serial.tools.list_ports
+
 from pHsensor import *
 from HM8143 import *
 from textwrap import dedent
@@ -15,14 +18,31 @@ msg_help = dedent(
         4) Check the results using option 4 and 5\n
         """)
 
+device_0 = "/dev/ttyUSB0"
+device_1 = "/dev/ttyUSB1"
+
+def check_connected_devices():
+    connected_ports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
+    for p in connected_ports:
+        for i in p:
+            if (i == device_0):
+                return True
+    return False
+
+
 def main():
     colorama_init()
+    if check_connected_devices() == True:
+        print(device_0 + " found!")
+    else:
+        print(f"\n{Fore.RED}error: connected devices no detected{Style.RESET_ALL}!\n")
+        sys.exit(1)
     pH_sensor = serialpHSensor()
     r = pH_sensor.init_control()
     print("pH sensor init: " + str(r))
-    power_supply = serialPowerSupply()
-    r = power_supply.init_control()
-    print("Power supply device: " + str(r))
+    #power_supply = serialPowerSupply()
+    #r = power_supply.init_control()
+    #print("Power supply device: " + str(r))
 
     print(msg_help)
     while True:
@@ -31,8 +51,9 @@ def main():
         print(f"{Fore.CYAN}3. End Calibration{Style.RESET_ALL}!")
         print(f"{Fore.CYAN}4. Retrive single pH value{Style.RESET_ALL}!")
         print(f"{Fore.CYAN}5. Retrive temperature value(celsius){Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}6. Measure pH values (loop){Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}7. Exit{Style.RESET_ALL}!\n")
+        print(f"{Fore.CYAN}6. Retrive actual voltage{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}7. Measure pH values (loop){Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}8. Exit{Style.RESET_ALL}!\n")
         option = input("What would you like to do?: ")
         print("Selected option:" + option)
 
@@ -91,15 +112,28 @@ def main():
                     tmp = tmp + str(msg[i]) + "  "
 
                 print("Response(dec): " + tmp)
-                temp = pH_sensor.decode_temp_signal_protocol(msg)
-                print("\nTemperature (Celcius) = " + temp)
+                if len(msg) == 0:
+                    print(f"\n{Fore.RED}error: no enough information to decode{Style.RESET_ALL}!\n")
+                else:
+                    temp = pH_sensor.decode_temp_signal_protocol(msg)
+                    print("\nTemperature (Celcius) = " + temp)
 
 
         elif option == "6":
+            print(f"\n{Fore.GREEN}Rertive actual voltage{Style.RESET_ALL}!\n")
+            power_supply.enable_mixed_mode()
+            msg = power_supply.get_voltage()
+            if len(msg) == 0:
+                print(f"\n{Fore.RED}error: no response for retrive temperature value!{Style.RESET_ALL}!\n")
+            else:
+                print("Response: " + str(msg))
+            power_supply.disable_mixed_mode()
+
+        elif option == "7":
             print(f"\n{Fore.GREEN}Starting loop to measure values{Style.RESET_ALL}!\n")
 
 
-        elif option == "7":
+        elif option == "8":
             pH_sensor.serial_port.close()
             print(f"\n{Fore.GREEN}Exit!{Style.RESET_ALL}!\n")
             break
