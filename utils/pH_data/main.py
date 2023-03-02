@@ -1,6 +1,8 @@
+import csv
 import sys
 import serial.tools.list_ports
 
+from datetime import datetime
 from pHsensor import *
 from HM8143 import *
 from textwrap import dedent
@@ -27,6 +29,16 @@ def check_connected_devs(connected_ports, dev):
             return True
     return False
 
+def create_dataset_dir():
+    now = datetime.now()
+    dirname = "dataset_" + now.strftime("%d_%m_%Y-%H_%M_%S")
+    try:
+        os.mkdir(dirname)
+        print("Output directory:" , dirname, " created ") 
+    except FileExistsError:
+        print("Output directory:" , dirname,  " already exists")
+
+    return dirname
 
 def main():
     colorama_init()
@@ -136,8 +148,34 @@ def main():
 
         elif option == "7":
             print(f"\n{Fore.GREEN}Retrive pH values into a loop{Style.RESET_ALL}!\n")
-            pH_sensor.retrive_ph_loop()
+            outdir = create_dataset_dir()
+            init_time = 0
+            logfile = outdir + "/" + "pH.csv"
+            with open(logfile, 'w') as f:
+                header = ['time', 'pH']
+                writer = csv.writer(f)
+                writer.writerow(header)
+                try:
+                    while True:
+                        msg = pH_sensor.retrive_single_pH_value(v=False)
+                        if (len(msg) == 0):
+                            print("read error")
+                            pass
+                        else:
+                            pH = pH_sensor.decode_ph_signal_protocol(msg)
+                            current_time = datetime.now()
+                            if (init_time == 0):
+                                init_time = current_time
 
+                            sample_time = current_time - init_time
+                            data = [sample_time, pH]
+                            writer.writerow(data)
+                            print("time: " + str(sample_time) + " pH: " + pH)
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    print("ctrl-c detected, stop to get values")
+                    pass
+                
 
         elif option == "8":
             pH_sensor.serial_port.close()

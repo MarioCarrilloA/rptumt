@@ -110,17 +110,17 @@ class serialpHSensor():
         return data
 
 
-    def retrive_ph_loop(self):
-        try:
-            while True:
-                msg = self.retrive_single_pH_value(v=False)
-                if (len(msg) == 0):
-                    print("read error")
-                    pass
-                else:
-                    pH = self.decode_ph_signal_protocol(msg)
-                print("pH: " + pH)
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("ctrl-c detected, stop to get values")
-            return
+#    def retrive_ph_loop(self):
+#        try:
+#            while True:
+#                msg = self.retrive_single_pH_value(v=False)
+#                if (len(msg) == 0):
+#                    print("read error")
+#                    pass
+#                else:
+#                    pH = self.decode_ph_signal_protocol(msg)
+#                print("pH: " + pH)
+#                time.sleep(1)
+#        except KeyboardInterrupt:
+#            print("ctrl-c detected, stop to get values")
+#            return
