@@ -109,9 +109,8 @@ class serialPowerSupply():
     def get_voltage(self):
         data = self.loop_cmd("MU1")
         if (len(data) != 0):
-            print("Measured voltage: " + data)
-        else:
-            print("Measured voltage: UNKNOWN!")
+            return data
+        return
 
 
     def print_status(self):

@@ -21,28 +21,33 @@ msg_help = dedent(
 device_0 = "/dev/ttyUSB0"
 device_1 = "/dev/ttyUSB1"
 
-def check_connected_devices():
-    connected_ports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
+def check_connected_devs(connected_ports, dev):
     for p in connected_ports:
-        for i in p:
-            if (i == device_0):
-                return True
+        if (dev in p):
+            return True
     return False
 
 
 def main():
     colorama_init()
-    if check_connected_devices() == True:
+    connected_ports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
+    if (check_connected_devs(connected_ports, device_0) == True):
         print(device_0 + " found!")
+        pH_sensor = serialpHSensor()
+        r = pH_sensor.init_control()
+        print("pH sensor init: " + str(r))
     else:
         print(f"\n{Fore.RED}error: connected devices no detected{Style.RESET_ALL}!\n")
         sys.exit(1)
-    pH_sensor = serialpHSensor()
-    r = pH_sensor.init_control()
-    print("pH sensor init: " + str(r))
-    #power_supply = serialPowerSupply()
-    #r = power_supply.init_control()
-    #print("Power supply device: " + str(r))
+
+
+    if (check_connected_devs(connected_ports, device_1) == True):
+        power_supply = serialPowerSupply()
+        r = power_supply.init_control()
+        print("Power supply device: " + str(r))
+    else:
+        print(f"\n{Fore.YELLOW}warning: /dev/ttyUSB1 no dtected{Style.RESET_ALL}!\n")
+
 
     print(msg_help)
     while True:
@@ -130,7 +135,8 @@ def main():
             power_supply.disable_mixed_mode()
 
         elif option == "7":
-            print(f"\n{Fore.GREEN}Starting loop to measure values{Style.RESET_ALL}!\n")
+            print(f"\n{Fore.GREEN}Retrive pH values into a loop{Style.RESET_ALL}!\n")
+            pH_sensor.retrive_ph_loop()
 
 
         elif option == "8":

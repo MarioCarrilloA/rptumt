@@ -18,8 +18,9 @@ class serialpHSensor():
         self.serial_port = None
 
 
-    def command(self, cmd):
-        print("Executed command: " + str(cmd))
+    def command(self, cmd, v=True):
+        if (v == True):
+            print("Executed command: " + str(cmd))
         self.serial_port.write(serial.to_bytes(cmd))
         time.sleep(1)
         data = self.serial_port.readline()
@@ -38,9 +39,9 @@ class serialpHSensor():
         return msg
 
 
-    def retrive_single_pH_value(self):
+    def retrive_single_pH_value(self, v=True):
         cmd = [57, 57, 57, 33, 13]
-        msg = self.command(cmd)
+        msg = self.command(cmd, v)
         return msg
 
     def retrive_temperature_value(self):
@@ -98,7 +99,6 @@ class serialpHSensor():
         return self.serial_port.is_open
 
 
-
     def loop_cmd(self, cmd):
         found_flag = False
         data = ""
@@ -110,4 +110,17 @@ class serialpHSensor():
         return data
 
 
-
+    def retrive_ph_loop(self):
+        try:
+            while True:
+                msg = self.retrive_single_pH_value(v=False)
+                if (len(msg) == 0):
+                    print("read error")
+                    pass
+                else:
+                    pH = self.decode_ph_signal_protocol(msg)
+                print("pH: " + pH)
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("ctrl-c detected, stop to get values")
+            return
