@@ -34,7 +34,7 @@ def create_dataset_dir():
     dirname = "dataset_" + now.strftime("%d_%m_%Y-%H_%M_%S")
     try:
         os.mkdir(dirname)
-        print("Output directory:" , dirname, " created ") 
+        print("Output directory:" , dirname, " created ")
     except FileExistsError:
         print("Output directory:" , dirname,  " already exists")
 
@@ -70,7 +70,8 @@ def main():
         print(f"{Fore.CYAN}5. Retrive temperature value(celsius){Style.RESET_ALL}!")
         print(f"{Fore.CYAN}6. Retrive actual voltage{Style.RESET_ALL}!")
         print(f"{Fore.CYAN}7. Measure pH values (loop){Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}8. Exit{Style.RESET_ALL}!\n")
+        print(f"{Fore.CYAN}8. Collect full dataset{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}9. Exit{Style.RESET_ALL}!\n")
         option = input("What would you like to do?: ")
         print("Selected option:" + option)
 
@@ -175,12 +176,25 @@ def main():
                 except KeyboardInterrupt:
                     print("ctrl-c detected, stop to get values")
                     pass
-                
+
 
         elif option == "8":
+            print(f"\n{Fore.GREEN}Collect full dataset{Style.RESET_ALL}!\n")
+            for i in range (0, 20):
+                if i % 2:
+                    msg = power_supply.set_voltage(7.2)
+                    print(msg)
+                else:
+                    msg = power_supply.set_voltage(8.5)
+                    print(msg)
+                time.sleep(0.2)
+
+
+        elif option == "9":
             pH_sensor.serial_port.close()
             print(f"\n{Fore.GREEN}Exit!{Style.RESET_ALL}!\n")
             break
+
 
         else:
             print(f"\n{Fore.RED}error: unknown option!{Style.RESET_ALL}!\n")

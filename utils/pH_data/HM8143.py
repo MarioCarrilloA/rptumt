@@ -84,7 +84,10 @@ class serialPowerSupply():
 
 
     def set_voltage(self, voltage):
-        msg = self.command(voltage)
+        format_voltage = "{:.2f}".format(voltage)
+        cmd = "SU1:" + format_voltage
+        msg = self.command(cmd)
+        return msg
 
 
     def loop_cmd(self, cmd):
