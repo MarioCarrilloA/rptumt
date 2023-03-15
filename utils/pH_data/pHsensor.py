@@ -22,7 +22,7 @@ class serialpHSensor():
         if (v == True):
             print("Executed command: " + str(cmd))
         self.serial_port.write(serial.to_bytes(cmd))
-        time.sleep(1)
+        time.sleep(1.5)
         data = self.serial_port.readline()
         return data
 
@@ -67,7 +67,8 @@ class serialpHSensor():
             C = 0
 
         pH = float(int((A * 4096) + (B * 64) + C) * 0.001)
-        return "{:.4f}".format(pH)
+        #return "{:.4f}".format(pH)
+        return "{:.2f}".format(pH)
 
     def decode_temp_signal_protocol(self, data):
         if (len(data) >= 2):

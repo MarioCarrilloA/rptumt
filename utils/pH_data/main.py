@@ -1,7 +1,10 @@
 import csv
 import sys
 import serial.tools.list_ports
+import tkinter
 
+from datetime import datetime
+from picamera import PiCamera
 from datetime import datetime
 from pHsensor import *
 from HM8143 import *
@@ -63,15 +66,16 @@ def main():
 
     print(msg_help)
     while True:
-        print(f"{Fore.CYAN}1. Start Calibration{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}2. Init pH 7 calibration{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}3. End Calibration{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}4. Retrive single pH value{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}5. Retrive temperature value(celsius){Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}6. Retrive actual voltage{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}7. Measure pH values (loop){Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}8. Collect full dataset{Style.RESET_ALL}!")
-        print(f"{Fore.CYAN}9. Exit{Style.RESET_ALL}!\n")
+        print(f"{Fore.CYAN}1.  Start Calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}2.  Init pH 7 calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}3.  End Calibration{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}4.  Retrive single pH value{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}5.  Retrive temperature value(celsius){Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}6.  Retrive actual voltage{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}7.  Measure pH values (loop save values .CSV){Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}8.  Measure pH values loop{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}9.  Collect full dataset{Style.RESET_ALL}!")
+        print(f"{Fore.CYAN}10. Exit{Style.RESET_ALL}!\n")
         option = input("What would you like to do?: ")
         print("Selected option:" + option)
 
@@ -148,7 +152,7 @@ def main():
             power_supply.disable_mixed_mode()
 
         elif option == "7":
-            print(f"\n{Fore.GREEN}Retrive pH values into a loop{Style.RESET_ALL}!\n")
+            print(f"\n{Fore.GREEN}Retrive pH values into a loop (save .csv){Style.RESET_ALL}!\n")
             outdir = create_dataset_dir()
             init_time = 0
             logfile = outdir + "/" + "pH.csv"
@@ -179,18 +183,82 @@ def main():
 
 
         elif option == "8":
-            print(f"\n{Fore.GREEN}Collect full dataset{Style.RESET_ALL}!\n")
-            for i in range (0, 20):
-                if i % 2:
-                    msg = power_supply.set_voltage(7.2)
-                    print(msg)
-                else:
-                    msg = power_supply.set_voltage(8.5)
-                    print(msg)
-                time.sleep(0.2)
+            print(f"\n{Fore.GREEN}Retrive pH values into a loop{Style.RESET_ALL}!\n")
+            init_time = 0
+            try:
+                while True:
+                    msg = pH_sensor.retrive_single_pH_value(v=False)
+                    if (len(msg) == 0):
+                        print("read error")
+                        pass
+                    else:
+                        pH = pH_sensor.decode_ph_signal_protocol(msg)
+                        current_time = datetime.now()
+                        if (init_time == 0):
+                            init_time = current_time
+
+                        sample_time = current_time - init_time
+                        print("time: " + str(sample_time) + " pH: " + pH)
+                    time.sleep(2)
+            except KeyboardInterrupt:
+                print("ctrl-c detected, stop to get values")
+                pass
+
+
 
 
         elif option == "9":
+            #root = tkinter.Tk()
+            #ws = root.winfo_screenwidth()
+            #hs = root.winfo_screenheight()
+            #print("WS HS: " + str(ws) + " " + str(hs))
+            ws = 1920
+            hs = 1200
+            RESOLUTION = (1280, 720)
+            SHUTTER_SPEED = 2400
+            INIT_CAMERA_TIME = 5
+            NUM_SAMPLES = 6
+            #VOLTAGE = [7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 9.0, 9.1, 9.2]
+            #VOLTAGE = [8.2, 8.3, 8.4, 8.5]
+            #VOLTAGE = [8.3, 8.4, 8.5, 8.6]
+            VOLTAGE = [8.0, 8.1, 8.2, 8.3]
+            print(f"\n{Fore.GREEN}Collect full dataset{Style.RESET_ALL}!\n")
+            outdir = create_dataset_dir()
+            camera = PiCamera()
+            #camera.shutter_speed = SHUTTER_SPEED
+            camera.shutter_speed = 2400
+            camera.resolution = RESOLUTION
+            camera.preview_fullscreen = False
+            camera.preview_window = (round(ws/2), 160, 640, 360)
+            camera.start_preview()
+            power_supply.enable_mixed_mode()
+            power_supply.enable_output()
+            power_supply.set_voltage(VOLTAGE[0])
+            time.sleep(INIT_CAMERA_TIME)
+            print("Init time: " + str(INIT_CAMERA_TIME))
+            for v in VOLTAGE:
+                print("Set voltage: " + str(v))
+                msg = power_supply.set_voltage(v)
+                sys_voltage = power_supply.get_voltage()
+                print("Configuration: " + str(sys_voltage))
+                print("Taking image...")
+                time.sleep(1)
+
+                msg = pH_sensor.retrive_single_pH_value(v=False)
+                pH = pH_sensor.decode_ph_signal_protocol(msg)
+
+                for n in range(0, NUM_SAMPLES):
+                    outimg = outdir + "/" + "img_" + str(v) + "_v_" + pH + "_ph_" + str(n) + ".png"
+                    print("capture: " + outimg)
+                    camera.capture(outimg)
+                    time.sleep(0.1)
+            power_supply.disable_output()
+            power_supply.disable_mixed_mode()
+            camera.stop_preview()
+            camera.close()
+
+
+        elif option == "10":
             pH_sensor.serial_port.close()
             print(f"\n{Fore.GREEN}Exit!{Style.RESET_ALL}!\n")
             break
