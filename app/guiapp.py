@@ -98,6 +98,7 @@ class guiApp(object):
         self.status_chart.setLabel("left", "object size um", **self.styles)
         self.status_chart.setLabel("bottom", "Sample number", **self.styles)
         self.status_chart.showGrid(x=True, y=True)
+        self.status_chart.setYRange(0, 600, padding=0)
 
 
         # Sampled images
