@@ -57,6 +57,14 @@ class recorder():
         self.camera.preview_window = (round(ws/2), 160, 640, 360)
         self.camera.start_preview()
         self.video_out_file = ""
+        self.mp4out = ""
+        self.aviout = ""
+        self.output_path = "/home/pi/Desktop/VIDEOS/"
+
+        # Video output generation
+        if not os.path.exists(self.output_path):
+            print("Create output path")
+            os.makedirs(self.output_path)
 
         #Label
         self.state = StringVar()
@@ -79,7 +87,8 @@ class recorder():
 
 
         # Convert to mp4  button
-        self.mp4_button = Button(self.root, text='Convert to mp4', command=self.convert2mp4)
+        #self.mp4_button = Button(self.root, text='Convert to mp4', command=self.convert2mp4)
+        self.mp4_button = Button(self.root, text='Generate mp4, avi videos', command=self.process_videos)
         self.mp4_button.config(width=20, height=1)
         self.mp4_button.grid(row=3, column=0)
         self.mp4_button.config(state=tk.DISABLED)
@@ -104,7 +113,7 @@ class recorder():
 
     def start(self):
         now = datetime.now()
-        self.video_basename = "/home/pi/Desktop/VIDEOS/" + now.strftime("%d_%m_%Y-%H_%M_%S")
+        self.video_basename = self.output_path + now.strftime("%d_%m_%Y-%H_%M_%S")
         self.video_out_file = self.video_basename + ".h264"
         self.state.set("Recording...")
         self.start_button.config(state=tk.DISABLED)
@@ -121,8 +130,8 @@ class recorder():
         if (self.is_MP4Box_tool()):
             video_format = '{0}:fps={1}'.format(self.video_out_file, FPS)
             print(video_format)
-            mp4out = self.video_basename + ".mp4"
-            process = subprocess.Popen(['MP4Box', '-add', video_format, "-new", mp4out],
+            self.mp4out = self.video_basename + ".mp4"
+            process = subprocess.Popen(['MP4Box', '-add', video_format, "-new", self.mp4out],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
@@ -132,6 +141,32 @@ class recorder():
             print("error: MP4Box no found")
             self.mp4_button.config(state=tk.DISABLED)
 
+    def convert_mp4_2_avi(self):
+        self.aviout = self.video_basename + ".avi"
+        print("convert to AVI, this may take some time...")
+        #process = subprocess.Popen(['ffmpeg', '-i', self.mp4out, "-vcodec", "copy", "-acodec", "copy", tmp],
+        #        stdout=subprocess.PIPE,
+        #        stderr=subprocess.PIPE)
+        #stdout, stderr = process.communicate()
+        process = subprocess.Popen(['ffmpeg', '-i', self.mp4out, "-f", "avi", "-vcodec", "mjpeg", self.aviout],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        print(stdout.decode("UTF-8"))
+        print(stderr.decode("UTF-8"))
+        print("===========================================================")
+        print("Finish video generation!!!")
+
+
+        #ffmpeg -i file.mp4 -vcodec copy -acodec copy file.avi
+        #ffmpeg -i input.avi -f avi -vcodec mjpeg output.avi
+
+        #ffmpeg -i file.mp4 -f avi -vcodec mjpeg out.avi
+
+
+    def process_videos(self):
+        self.convert2mp4()
+        self.convert_mp4_2_avi()
 
     def is_MP4Box_tool(self):
         try:
