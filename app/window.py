@@ -1,20 +1,21 @@
-from guiapp import *
-
+import cv2
 import datetime
 import logging
 import random
 import sys
+import os
 import time
 import numpy as np
-import cv2
 import time
-from datetime import datetime
 import random
 import string
 import pyqtgraph
 import threading
-from camera import *
 
+from camera import *
+from datetime import datetime
+from guiapp import *
+from yolov5_upstream import detect
 
 class MainWindow(QMainWindow, guiApp):
     def __init__(self, app):
@@ -70,21 +71,27 @@ class MainWindow(QMainWindow, guiApp):
         self.display_image(img, self.disp, 1)
 
 
+    def predict(self, sample_path, img_name):
+        pwd = os.getcwd()
+        predicted_sample_path = sample_path.replace("sample", "predicted")
+
+        # Usage of YOLOv5 nano model
+        model = pwd + "/" + "model/nano.pt"
+        input_img = sample_path + "/" + img_name
+        detect.run(
+            weights=model,
+            source=input_img,
+            project=sample_path,
+            name="prediction",
+            hide_conf=True,
+            hide_labels=True,
+            line_thickness=1,
+            save_txt=True
+        )
+
     def take_sample(self):
-        self.console.log_msg(logging.INFO, "getting sample")
-        now = datetime.now()
-        image_name = "img_" + now.strftime("%d_%m_%Y-%H_%M_%S")
-        if self.liveview_enabled == True:
-            image = self.camera.image_queue.get()
-            if image is not None and len(image) > 0:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        else:
-            image = self.camera.grab_sample_image()
-            if image is None:
-                self.console.log_msg(logging.ERROR, "cannot grab frame from camera")
-                return None
-        self.sampled_images.update({image_name: image})
-        self.listView.insertItem(0, QListWidgetItem(image_name))
+        sample_path, img_name = self.camera.save_single_image()
+        self.predict(sample_path, img_name)
 
 
     def clicked_list(self, item):

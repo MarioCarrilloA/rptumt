@@ -1,9 +1,13 @@
 import cv2
 import logging
 import numpy as np
-from queue import Queue
-#from multiprocessing import Queue
+import os
+import random
 import time
+
+from picamera2 import Picamera2
+from queue import Queue
+from datetime import datetime
 
 
 SAMPLING_TIME = 1
@@ -15,11 +19,41 @@ class Camera():
         # Configuration
         self.width = 1280
         self.heigh = 720
-        self.cap_api = cv2.CAP_V4L2
         self.cycle_time = 50
-        self.exposure_time = 0 # Zero for automatic exposure time
-        self.camera_number = 1
-        self.image_queue = Queue()
+        self.exposure_time = 2400 # microseconds
+        self.workspace_path = os.environ['HOME'] + "/" + "Workspace3DSC"
+        now = datetime.now()
+        self.experiment_id = self.workspace_path + "/" + "experiment_" + now.strftime("%d_%m_%Y-%H_%M_%S")
+
+        # Create output paths
+        if os.path.exists(self.workspace_path) == False:
+            os.makedirs(self.workspace_path)
+
+        if os.path.exists(self.experiment_id) == False:
+            os.makedirs(self.experiment_id)
+
+
+    def _get_configured_camera(self):
+        camera = Picamera2()
+        camera_config = camera.create_still_configuration(main={"size": (self.width, self.heigh)})
+        camera.configure(camera_config)
+        camera.set_controls({"ExposureTime": self.exposure_time})
+        return camera
+
+
+    def save_single_image(self):
+        now = datetime.now()
+        imgname = "sample.png"
+        sample_path = self.experiment_id + "/" + "sample_" + now.strftime("%d_%m_%Y-%H_%M_%S")
+        os.mkdir(sample_path)
+        camera = self._get_configured_camera()
+        camera.start()
+        time.sleep(1)
+        print("OUTPUT:", sample_path)
+        camera.capture_file(sample_path + "/" + imgname)
+        camera.stop()
+        camera.close()
+        return sample_path, imgname
 
 
     def _create_video_capture(self):
