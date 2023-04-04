@@ -172,7 +172,7 @@ class MainWindow(QMainWindow, guiApp):
             self.timer.timeout.connect(lambda:
             self.show_image(self.camera.image_queue, self.disp, self.display_scale))
             self.timer.start(self.display_time)
-            self.capture_thread = threading.Thread(target=self.camera.grab_images)
+            self.capture_thread = threading.Thread(target=self.camera.grab_frames)
 
             self.capture_thread.start()
             time.sleep(1)

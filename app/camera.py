@@ -11,10 +11,20 @@ from datetime import datetime
 
 
 SAMPLING_TIME = 1
+CAMERA_PREPARATION_TIME = 2
+
 
 class Camera():
     def __init__(self):
         self.capturing = False
+
+        # Support for Opencv:
+        # The camera can be handled by the official python
+        # module of Raspberry Pi (picamera(2)). However, it
+        # can be also handled by OpenCV.
+        self.cap_api = cv2.CAP_V4L2
+        self.image_queue = Queue()
+        self.camera_number = 1
 
         # Configuration
         self.width = 1280
@@ -48,12 +58,27 @@ class Camera():
         os.mkdir(sample_path)
         camera = self._get_configured_camera()
         camera.start()
-        time.sleep(1)
-        print("OUTPUT:", sample_path)
+        time.sleep(CAMERA_PREPARATION_TIME)
         camera.capture_file(sample_path + "/" + imgname)
         camera.stop()
         camera.close()
         return sample_path, imgname
+
+
+    def grab_frames(self):
+        camera = self._get_configured_camera()
+        camera.start()
+        logging.info("capturing frames")
+        while self.capturing:
+            image = camera.capture_array()
+            if image is not None and self.image_queue.qsize() < 2:
+                self.image_queue.put(image)
+            else:
+                time.sleep(self.cycle_time / 1000.0)
+        camera.stop()
+        camera.close()
+        img = np.zeros([self.heigh, self.width, 3], dtype=np.uint8)
+        self.image_queue.put(img)
 
 
     def _create_video_capture(self):
@@ -62,10 +87,9 @@ class Camera():
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
         if self.exposure_time:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-            cap.set(cv2.CAP_PROP_EXPOSURE, EXPOSURE)
+            cap.set(cv2.CAP_PROP_EXPOSURE, 2400)
         else:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-
         return cap
 
 
