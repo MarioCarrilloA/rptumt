@@ -71,9 +71,12 @@ class MainWindow(QMainWindow, guiApp):
         self.start_monitor_button.clicked.connect(self.start_monitor)
         self.stop_monitor_button.clicked.connect(self.stop_monitor)
         self.take_sample_button.clicked.connect(self.take_sample)
+        self.raw_radiobutton.clicked.connect(self.change_image_type)
+        self.predicted_radiobutton.clicked.connect(self.change_image_type)
 
         # Last collected and processed sample
         self.last_measurment = None
+        self.last_selected_sample = None
 
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
@@ -117,16 +120,34 @@ class MainWindow(QMainWindow, guiApp):
         self.load_img_in_display(sample_id)
         self.take_sample_button.setEnabled(True)
         self.last_measurment = new_sample
+        self.last_selected_sample = sample_id
+
+    def change_image_type(self):
+        if self.last_selected_sample == None:
+            if self.raw_radiobutton.isChecked():
+                self.console.log_msg(logging.INFO, "Set display raw mode")
+            else:
+                self.console.log_msg(logging.INFO, "Set display prediction mode")
+            return
+        else:
+            self.load_img_in_display(self.last_selected_sample)
+
 
     def load_img_in_display(self, image_key):
         sample = self.sampled_images[image_key]
-        img = sample.load_sample_image()
+        if self.raw_radiobutton.isChecked():
+            img = sample.load_sample_image()
+            self.console.log_msg(logging.INFO, "Show raw image: " + str(image_key))
+        else:
+            img = sample.load_predicted_image()
+            self.console.log_msg(logging.INFO, "Show predicted image: " + str(image_key))
         self.local_image_queue.put(img)
         self.show_image(self.local_image_queue, self.disp, self.display_scale)
 
 
     def clicked_list(self, item):
         image_key = item.text()
+        self.last_selected_sample = image_key
         self.load_img_in_display(image_key)
 
 

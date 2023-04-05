@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-
-################################################################################
-## Form generated from reading UI file 'templateGIYTbq.ui'
-##
-## Created by: Qt User Interface Compiler version 5.15.5
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
+# Partially created by: Qt User Interface Compiler version 5.15.5
+# but many changes were added manually.
+##################################################################
 
 from PyQt5.QtCore import *  # type: ignore
 from PyQt5.QtGui import *  # type: ignore
@@ -132,12 +126,24 @@ class guiApp(object):
         self.vspace = QLabel()
         self.vspace.setGeometry(0, 0, 20, 30)
         self.table = QFormLayout(self.gstatus_info)
+
+        # Radiobuttons to select type of image
+        self.raw_radiobutton = QtWidgets.QRadioButton()
+        self.raw_radiobutton.setText("Raw")
+        self.predicted_radiobutton = QtWidgets.QRadioButton()
+        self.predicted_radiobutton.setText("Predicted")
+        self.predicted_radiobutton.setChecked(True)
+
         self.table.addRow("", self.vspace) # This is to add extra space, TODO: improve this
         self.table.addRow("Last measurement", self.last_point)
         self.table.addRow("Total samples", self.total_samples)
         self.table.addRow("Succeed samples", self.succeed_samples)
         self.table.addRow("Failed samples", self.failed_samples)
         self.table.addRow("pH (approx.)", self.ph)
+        self.table.addRow("Display mode:", None)
+        self.table.setVerticalSpacing(10)
+        self.table.addRow(self.predicted_radiobutton, self.raw_radiobutton)
+        #self.table.addRow(self.predicted_radiobutton, None)
 
         # Control
         self.gBoxControl = QGroupBox(self.centralwidget)
