@@ -7,7 +7,6 @@ import os
 import time
 import numpy as np
 import time
-import random
 import string
 import pyqtgraph
 import threading
@@ -16,6 +15,7 @@ from camera import *
 from datetime import datetime
 from guiapp import *
 from yolov5_upstream import detect
+from sample import *
 
 class MainWindow(QMainWindow, guiApp):
     def __init__(self, app):
@@ -72,6 +72,9 @@ class MainWindow(QMainWindow, guiApp):
         self.stop_monitor_button.clicked.connect(self.stop_monitor)
         self.take_sample_button.clicked.connect(self.take_sample)
 
+        # Last collected and processed sample
+        self.last_measurment = None
+
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
         self.display_image(img, self.disp, 1)
@@ -96,19 +99,35 @@ class MainWindow(QMainWindow, guiApp):
         )
 
 
+    def generate_random_id(self, k=5):
+        newid = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(k))
+        return newid
+
+
     def take_sample(self):
         self.take_sample_button.setEnabled(False)
         sample_path, img_name = self.camera.save_single_image()
         self.predict(sample_path, img_name)
         self.console.log_msg(logging.INFO, "New sample processed")
+        sample_id = os.path.basename(sample_path) + "_" + self.generate_random_id(5)
+        new_sample = Sample(sample_id)
+        new_sample.sample_path = sample_path
+        self.sampled_images.update({sample_id: new_sample})
+        self.listView.insertItem(0, QListWidgetItem(sample_id))
+        self.load_img_in_display(sample_id)
         self.take_sample_button.setEnabled(True)
+        self.last_measurment = new_sample
+
+    def load_img_in_display(self, image_key):
+        sample = self.sampled_images[image_key]
+        img = sample.load_sample_image()
+        self.local_image_queue.put(img)
+        self.show_image(self.local_image_queue, self.disp, self.display_scale)
 
 
     def clicked_list(self, item):
         image_key = item.text()
-        img = self.sampled_images[image_key]
-        self.local_image_queue.put(img)
-        self.show_image(self.local_image_queue, self.disp, self.display_scale)
+        self.load_img_in_display(image_key)
 
 
     def update_plot(self):
