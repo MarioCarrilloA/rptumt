@@ -31,7 +31,7 @@ class MainWindow(QMainWindow, guiApp):
 
         # Start a new worker thread and connect the slots for the worker
         self.console.start_thread()
-        self.sampling_button.clicked.connect(self.take_sample)
+        #self.sampling_button.clicked.connect(self.take_sample)
 
         # MONITORING
         self.monitor_timer = QTimer(self)
@@ -65,6 +65,12 @@ class MainWindow(QMainWindow, guiApp):
         self.sampled_images = {}
         self.camera = Camera()
 
+        # Connection
+        self.start_liveview_button.clicked.connect(self.start_liveview2)
+        self.stop_liveview_button.clicked.connect(self.stop_liveview)
+        self.start_monitor_button.clicked.connect(self.start_monitor)
+        self.stop_monitor_button.clicked.connect(self.stop_monitor)
+        self.take_sample_button.clicked.connect(self.take_sample)
 
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
@@ -89,9 +95,13 @@ class MainWindow(QMainWindow, guiApp):
             save_txt=True
         )
 
+
     def take_sample(self):
+        self.take_sample_button.setEnabled(False)
         sample_path, img_name = self.camera.save_single_image()
         self.predict(sample_path, img_name)
+        self.console.log_msg(logging.INFO, "New sample processed")
+        self.take_sample_button.setEnabled(True)
 
 
     def clicked_list(self, item):
@@ -127,7 +137,7 @@ class MainWindow(QMainWindow, guiApp):
         while self.monitor_running:
             if measurement_flag == True:
                 self.console.log_msg(logging.INFO, "getting measurement")
-                avg_area = random.uniform(0.1, 1.0)
+                avg_area = random.uniform(50, 600)
                 self.monitor_queue.put(avg_area)
                 measurement_flag = False
             count+=1
@@ -141,54 +151,111 @@ class MainWindow(QMainWindow, guiApp):
 
     def update_state(self):
         self.update_plot()
-        self.take_sample()
+        #self.take_sample()
 
 
-    def monitor(self):
-        if (self.monitor_running == False):
-            self.console.log_msg(logging.INFO, "starting monitoring process ...")
-            self.monitor_timer = QTimer(self)
-            self.monitor_timer.timeout.connect(lambda:self.update_state())
-            self.monitor_timer.start(5000)
-            self.monitor_thread = threading.Thread(target=self.start_monitoring)
-            self.monitor_thread.start()
-            self.monitor_running = True
-            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Stop monitoring", None))
-        else:
-            self.monitor_running = False
-            self.monitor_thread.join()
-            self.console.log_msg(logging.INFO, "stopping monitoring process ...")
-            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
-            self.monitor_timer.stop()
+#    def monitor(self):
+#        if (self.monitor_running == False):
+#            self.console.log_msg(logging.INFO, "starting monitoring process ...")
+#            self.monitor_timer = QTimer(self)
+#            self.monitor_timer.timeout.connect(lambda:self.update_state())
+#            self.monitor_timer.start(1000)
+#            self.monitor_thread = threading.Thread(target=self.start_monitoring)
+#            self.monitor_thread.start()
+#            self.monitor_running = True
+#            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Stop monitoring", None))
+#        else:
+#            self.monitor_running = False
+#            self.monitor_thread.join()
+#            self.console.log_msg(logging.INFO, "stopping monitoring process ...")
+#            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
+#            self.monitor_timer.stop()
 
 
-    def start_liveview(self):
-        if (self.liveview_enabled == False):
-            self.console.log_msg(logging.WARNING,
-                "long exposure of the culture to light may affect the incubation process.")
-            self.camera.enable_capture()
-            self.console.log_msg(logging.INFO, "starting live view session ...")
-            self.timer = QTimer(self)           # Timer to trigger display
-            self.timer.timeout.connect(lambda:
+    def start_monitor(self):
+        self.console.log_msg(logging.INFO, "starting monitoring process ...")
+        self.monitor_timer = QTimer(self)
+        self.monitor_timer.timeout.connect(lambda:self.update_state())
+        self.monitor_timer.start(1000)
+        self.monitor_thread = threading.Thread(target=self.start_monitoring)
+        self.monitor_thread.start()
+        self.monitor_running = True
+        self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Stop monitoring", None))
+        self.start_monitor_button.setEnabled(False)
+        self.start_liveview_button.setEnabled(False)
+        self.stop_monitor_button.setEnabled(True)
+
+
+    def stop_monitor(self):
+        self.monitor_running = False
+        self.monitor_thread.join()
+        self.console.log_msg(logging.INFO, "stopping monitoring process ...")
+        self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
+        self.monitor_timer.stop()
+        self.start_monitor_button.setEnabled(True)
+        self.start_liveview_button.setEnabled(True)
+        self.stop_monitor_button.setEnabled(False)
+
+
+    def start_liveview2(self):
+        self.console.log_msg(logging.WARNING,
+            "long exposure of the culture to light may affect the incubation process.")
+        self.camera.enable_capture()
+        self.console.log_msg(logging.INFO, "starting live view session ...")
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(lambda:
             self.show_image(self.camera.image_queue, self.disp, self.display_scale))
-            self.timer.start(self.display_time)
-            self.capture_thread = threading.Thread(target=self.camera.grab_frames)
+        self.timer.start(self.display_time)
+        self.capture_thread = threading.Thread(target=self.camera.grab_frames)
+        self.capture_thread.start()
+        self.start_liveview_button.setEnabled(False)
+        self.take_sample_button.setEnabled(False)
+        self.start_monitor_button.setEnabled(False)
+        self.stop_liveview_button.setEnabled(True)
 
-            self.capture_thread.start()
-            time.sleep(1)
-            if self.capture_thread.is_alive():
-                self.liveview_enabled = True
-                self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Stop live view", None))
-        else:
-            self.console.log_msg(logging.INFO, "stopping live view session...")
-            self.liveview_enabled = False
-            self.camera.disable_capture()
-            print("waiting for thread")
-            self.capture_thread.join()
-            print("shows black background")
-            self.show_default_view()
-            self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
-            self.timer.stop()
+
+    def stop_liveview(self):
+        self.console.log_msg(logging.INFO, "stopping live view session...")
+        self.camera.disable_capture()
+        print("waiting for thread")
+        self.capture_thread.join()
+
+        print("shows black background")
+        self.show_default_view()
+        self.timer.stop()
+        self.start_liveview_button.setEnabled(True)
+        self.take_sample_button.setEnabled(True)
+        self.start_monitor_button.setEnabled(True)
+        self.stop_liveview_button.setEnabled(False)
+
+
+#    def start_liveview(self):
+#        if (self.liveview_enabled == False):
+#            self.console.log_msg(logging.WARNING,
+#                "long exposure of the culture to light may affect the incubation process.")
+#            self.camera.enable_capture()
+#            self.console.log_msg(logging.INFO, "starting live view session ...")
+#            self.timer = QTimer(self)           # Timer to trigger display
+#            self.timer.timeout.connect(lambda:
+#            self.show_image(self.camera.image_queue, self.disp, self.display_scale))
+#            self.timer.start(self.display_time)
+#            self.capture_thread = threading.Thread(target=self.camera.grab_frames)
+#
+#            self.capture_thread.start()
+#            time.sleep(1)
+#            if self.capture_thread.is_alive():
+#                self.liveview_enabled = True
+#                self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Stop live view", None))
+#        else:
+#            self.console.log_msg(logging.INFO, "stopping live view session...")
+#            self.liveview_enabled = False
+#            self.camera.disable_capture()
+#            print("waiting for thread")
+#            self.capture_thread.join()
+#            print("shows black background")
+#            self.show_default_view()
+#            self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
+#            self.timer.stop()
 
 
     # Fetch camera image from queue, and display it

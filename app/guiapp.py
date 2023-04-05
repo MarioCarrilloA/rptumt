@@ -141,25 +141,79 @@ class guiApp(object):
 
         # Control
         self.gBoxControl = QGroupBox(self.centralwidget)
-        self.gBoxControl.setObjectName(u"groupBox_5")
+        self.gBoxControl.setObjectName(u"controlBox")
         self.gBoxControl.setGeometry(QRect(1320, 795, 575, 170))
         self.gBoxControl.setStyleSheet("QGroupBox{border: 1px solid gray;}")
         self.gBoxControl.setTitle(QCoreApplication.translate("MainWindow", u"Control", None))
-        self.sampling_button = QPushButton(self.gBoxControl)
-        self.sampling_button.setObjectName(u"sampling")
-        self.sampling_button.setGeometry(QRect(10, 40, 130, 35))
-        self.sampling_button.setText(QCoreApplication.translate("MainWindow", u"Take a sample", None))
-        self.monitor_button = QPushButton(self.gBoxControl)
-        self.monitor_button.setObjectName(u"monitor_button")
-        self.monitor_button.setGeometry(QRect(10, 80, 130, 35))
-        self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
-        self.monitor_button.clicked.connect(self.monitor)
-        self.liveview_button = QPushButton(self.gBoxControl)
-        self.liveview_button.setObjectName(u"liveview_button")
-        self.liveview_button.setGeometry(QRect(10, 120, 130, 35))
-        self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
-        self.liveview_button.clicked.connect(self.start_liveview)
+        #self.sampling_button = QPushButton(self.gBoxControl)
+        #self.sampling_button.setObjectName(u"sampling")
+        #self.sampling_button.setGeometry(QRect(10, 40, 130, 35))
+        #self.sampling_button.setText(QCoreApplication.translate("MainWindow", u"Take a sample", None))
+        #self.monitor_button = QPushButton(self.gBoxControl)
+        #self.monitor_button.setObjectName(u"monitor_button")
+        #self.monitor_button.setGeometry(QRect(10, 80, 130, 35))
+        #self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
+        #self.monitor_button.clicked.connect(self.monitor)
+        #self.liveview_button = QPushButton(self.gBoxControl)
+        #self.liveview_button.setObjectName(u"liveview_button")
+        #self.liveview_button.setGeometry(QRect(10, 120, 130, 35))
+        #self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
+        #self.liveview_button.clicked.connect(self.start_liveview)
 
+
+        # New control buttons
+        # Buttons for live view control
+        self.liveview_label = QLabel("Camera Live View", self.gBoxControl)
+        self.liveview_label.setFont(QFont('Arial', 16))
+        self.liveview_label.move(20, 30)
+        self.liveview_label.setStyleSheet("QLabel { color : purple; }");
+
+        self.start_liveview_button = QPushButton(self.gBoxControl)
+        self.start_liveview_button.setGeometry(QRect(50, 70, 52, 52))
+        self.start_liveview_button.setIcon(QIcon('../imgs/icons/start_live.png'))
+        self.start_liveview_button.setIconSize(QSize(48, 48))
+        self.start_liveview_button.setToolTip("Start live view")
+
+        self.stop_liveview_button = QPushButton(self.gBoxControl)
+        self.stop_liveview_button.setGeometry(QRect(104, 70, 52, 52))
+        self.stop_liveview_button.setIcon(QIcon('../imgs/icons/stop_live.png'))
+        self.stop_liveview_button.setIconSize(QSize(48, 48))
+        self.stop_liveview_button.setEnabled(False)
+        self.stop_liveview_button.setToolTip("Stop live view")
+
+
+        # Buttons for monitoring control
+        self.monitor_label = QLabel("Monitoring control", self.gBoxControl)
+        self.monitor_label.setFont(QFont('Arial', 16))
+        self.monitor_label.move(300, 30)
+        self.monitor_label.setStyleSheet("QLabel { color : purple; }");
+
+        self.start_monitor_button = QPushButton(self.gBoxControl)
+        self.start_monitor_button.setGeometry(QRect(310, 70, 52, 52))
+        self.start_monitor_button.setIcon(QIcon('../imgs/icons/play_monitor.png'))
+        self.start_monitor_button.setIconSize(QSize(48, 48))
+        self.start_monitor_button.setToolTip("Start monitoring")
+
+        self.stop_monitor_button = QPushButton(self.gBoxControl)
+        self.stop_monitor_button.setGeometry(QRect(364, 70, 52, 52))
+        self.stop_monitor_button.setIcon(QIcon('../imgs/icons/stop_monitor.png'))
+        self.stop_monitor_button.setIconSize(QSize(48, 48))
+        self.stop_monitor_button.setToolTip("Stop monitoring")
+        self.stop_monitor_button.setEnabled(False)
+
+
+        self.take_sample_button = QPushButton(self.gBoxControl)
+        self.take_sample_button.setGeometry(QRect(418, 70, 52, 52))
+        self.take_sample_button.setIcon(QIcon('../imgs/icons/take_sample.png'))
+        self.take_sample_button.setToolTip("Take a sample")
+        self.take_sample_button.setIconSize(QSize(48, 48))
+        #self.take_sample_button.setEnabled(False)
+
+#        self.stop_monitor_button = QPushButton(self.gBoxControl)
+#        self.stop_monitor_button.setGeometry(QRect(458, 40, 52, 52))
+#        self.stop_monitor_button.setIcon(QIcon('../imgs/icons/stop_monitor.png'))
+#        self.stop_monitor_button.setIconSize(QSize(48, 48))
+#        self.stop_monitor_button.setEnabled(False)
 
         # Menu bar
         MainWindow.setCentralWidget(self.centralwidget)
