@@ -71,12 +71,13 @@ class MainWindow(QMainWindow, guiApp):
         self.start_monitor_button.clicked.connect(self.start_monitor)
         self.stop_monitor_button.clicked.connect(self.stop_monitor)
         self.take_sample_button.clicked.connect(self.take_sample)
-        self.raw_radiobutton.clicked.connect(self.change_image_type)
-        self.predicted_radiobutton.clicked.connect(self.change_image_type)
+        self.raw_radiobutton.clicked.connect(self.display_image_type)
+        self.predicted_radiobutton.clicked.connect(self.display_image_type)
 
         # Last collected and processed sample
         self.last_measurment = None
         self.last_selected_sample = None
+
 
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
@@ -96,7 +97,7 @@ class MainWindow(QMainWindow, guiApp):
             project=sample_path,
             name="prediction",
             hide_conf=True,
-            hide_labels=True,
+            hide_labels=False,
             line_thickness=1,
             save_txt=True
         )
@@ -122,7 +123,7 @@ class MainWindow(QMainWindow, guiApp):
         self.last_measurment = new_sample
         self.last_selected_sample = sample_id
 
-    def change_image_type(self):
+    def display_image_type(self):
         if self.last_selected_sample == None:
             if self.raw_radiobutton.isChecked():
                 self.console.log_msg(logging.INFO, "Set display raw mode")
@@ -194,24 +195,6 @@ class MainWindow(QMainWindow, guiApp):
         #self.take_sample()
 
 
-#    def monitor(self):
-#        if (self.monitor_running == False):
-#            self.console.log_msg(logging.INFO, "starting monitoring process ...")
-#            self.monitor_timer = QTimer(self)
-#            self.monitor_timer.timeout.connect(lambda:self.update_state())
-#            self.monitor_timer.start(1000)
-#            self.monitor_thread = threading.Thread(target=self.start_monitoring)
-#            self.monitor_thread.start()
-#            self.monitor_running = True
-#            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Stop monitoring", None))
-#        else:
-#            self.monitor_running = False
-#            self.monitor_thread.join()
-#            self.console.log_msg(logging.INFO, "stopping monitoring process ...")
-#            self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
-#            self.monitor_timer.stop()
-
-
     def start_monitor(self):
         self.console.log_msg(logging.INFO, "starting monitoring process ...")
         self.monitor_timer = QTimer(self)
@@ -267,35 +250,7 @@ class MainWindow(QMainWindow, guiApp):
         self.take_sample_button.setEnabled(True)
         self.start_monitor_button.setEnabled(True)
         self.stop_liveview_button.setEnabled(False)
-
-
-#    def start_liveview(self):
-#        if (self.liveview_enabled == False):
-#            self.console.log_msg(logging.WARNING,
-#                "long exposure of the culture to light may affect the incubation process.")
-#            self.camera.enable_capture()
-#            self.console.log_msg(logging.INFO, "starting live view session ...")
-#            self.timer = QTimer(self)           # Timer to trigger display
-#            self.timer.timeout.connect(lambda:
-#            self.show_image(self.camera.image_queue, self.disp, self.display_scale))
-#            self.timer.start(self.display_time)
-#            self.capture_thread = threading.Thread(target=self.camera.grab_frames)
-#
-#            self.capture_thread.start()
-#            time.sleep(1)
-#            if self.capture_thread.is_alive():
-#                self.liveview_enabled = True
-#                self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Stop live view", None))
-#        else:
-#            self.console.log_msg(logging.INFO, "stopping live view session...")
-#            self.liveview_enabled = False
-#            self.camera.disable_capture()
-#            print("waiting for thread")
-#            self.capture_thread.join()
-#            print("shows black background")
-#            self.show_default_view()
-#            self.liveview_button.setText(QCoreApplication.translate("MainWindow", u"Start live view", None))
-#            self.timer.stop()
+        self.display_image_type()
 
 
     # Fetch camera image from queue, and display it
