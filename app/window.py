@@ -66,7 +66,7 @@ class MainWindow(QMainWindow, guiApp):
         self.camera = Camera()
 
         # Connection
-        self.start_liveview_button.clicked.connect(self.start_liveview2)
+        self.start_liveview_button.clicked.connect(self.start_liveview)
         self.stop_liveview_button.clicked.connect(self.stop_liveview)
         self.start_monitor_button.clicked.connect(self.start_monitor)
         self.stop_monitor_button.clicked.connect(self.stop_monitor)
@@ -108,9 +108,9 @@ class MainWindow(QMainWindow, guiApp):
         return newid
 
 
-    def take_sample(self):
-        self.take_sample_button.setEnabled(False)
+    def process_sample(self):
         sample_path, img_name = self.camera.save_single_image()
+        self.console.log_msg(logging.INFO, "Processing prediction...")
         self.predict(sample_path, img_name)
         self.console.log_msg(logging.INFO, "New sample processed")
         sample_id = os.path.basename(sample_path) + "_" + self.generate_random_id(5)
@@ -119,9 +119,21 @@ class MainWindow(QMainWindow, guiApp):
         self.sampled_images.update({sample_id: new_sample})
         self.listView.insertItem(0, QListWidgetItem(sample_id))
         self.load_img_in_display(sample_id)
-        self.take_sample_button.setEnabled(True)
         self.last_measurment = new_sample
         self.last_selected_sample = sample_id
+        self.take_sample_button.setEnabled(True)
+        self.start_liveview_button.setEnabled(True)
+        self.console.log_msg(logging.INFO, "Finish to process " + str(sample_id))
+
+
+
+    def take_sample(self):
+        self.take_sample_button.setEnabled(False)
+        self.start_liveview_button.setEnabled(False)
+        self.console.log_msg(logging.INFO, "Taking new sample, init camera...")
+        prediction_thread = threading.Thread(target=self.process_sample)
+        prediction_thread.start()
+
 
     def display_image_type(self):
         if self.last_selected_sample == None:
@@ -196,6 +208,9 @@ class MainWindow(QMainWindow, guiApp):
 
 
     def start_monitor(self):
+        self.start_monitor_button.setEnabled(False)
+        self.start_liveview_button.setEnabled(False)
+        self.stop_monitor_button.setEnabled(True)
         self.console.log_msg(logging.INFO, "starting monitoring process ...")
         self.monitor_timer = QTimer(self)
         self.monitor_timer.timeout.connect(lambda:self.update_state())
@@ -204,9 +219,6 @@ class MainWindow(QMainWindow, guiApp):
         self.monitor_thread.start()
         self.monitor_running = True
         self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Stop monitoring", None))
-        self.start_monitor_button.setEnabled(False)
-        self.start_liveview_button.setEnabled(False)
-        self.stop_monitor_button.setEnabled(True)
 
 
     def stop_monitor(self):
@@ -220,7 +232,7 @@ class MainWindow(QMainWindow, guiApp):
         self.stop_monitor_button.setEnabled(False)
 
 
-    def start_liveview2(self):
+    def start_liveview(self):
         self.console.log_msg(logging.WARNING,
             "long exposure of the culture to light may affect the incubation process.")
         self.camera.enable_capture()
