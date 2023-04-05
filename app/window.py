@@ -78,6 +78,8 @@ class MainWindow(QMainWindow, guiApp):
         self.last_measurment = None
         self.last_selected_sample = None
 
+        # Test
+        self.bboxes_area_mean.setText("99999")
 
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
