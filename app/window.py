@@ -1,15 +1,16 @@
 import cv2
 import datetime
+import glob
 import logging
-import random
-import sys
-import os
-import time
 import numpy as np
-import time
-import string
+import os
 import pyqtgraph
+import random
+import statistics
+import string
+import sys
 import threading
+import time
 
 from camera import *
 from datetime import datetime
@@ -40,7 +41,7 @@ class MainWindow(QMainWindow, guiApp):
         self.data_y = []
         self.ref_x = []
         self.ref_y = []
-        self.ref_line = self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
+        #self.ref_line = self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
         self.msu_line = self.status_chart.plot(self.data_x, self.data_y, name="measurements",
                     pen='b', symbol='o', symbolSize=5)
 
@@ -110,23 +111,67 @@ class MainWindow(QMainWindow, guiApp):
         return newid
 
 
+    def read_labels(self, label_files):
+        areas = []
+        print("Computing areas of input files...")
+        for label_file in label_files:
+            f = open(label_file, 'r')
+            labels = f.readlines()
+            f.close()
+            for label in labels:
+                (cathegory, xc, yc, w, h) = label.strip().split(" ")
+                area = float(w) * float(h)
+                areas.append(area)
+        return areas
+
+
+    def generate_sample_data(self, sample_path, img_name):
+        label_path = sample_path + "/prediction/labels"
+        label_files = glob.glob(label_path + "/*.txt")
+
+        # Init sample structure
+        identity = os.path.basename(sample_path) + "_" + self.generate_random_id(5)
+        sample = Sample(identity=identity)
+        sample.sample_path = sample_path
+
+        # Evaluate if there are label files
+        if len(label_files) == 0:
+            self.console.log_msg(logging.WARNING, "Labels no found")
+            return sample
+
+        # Compute statistics
+        areas = self.read_labels(label_files)
+        if (len(areas) >= 3):
+            mean = statistics.mean(areas)
+            sd = statistics.stdev(areas)
+            sample.mean = mean
+            sample.sd = sd
+            sample.status = "VALID"
+        else:
+            self.console.log_msg(logging.WARNING, "Invalid: not enough data to compute statistics")
+        sample.areas = areas
+        sample.total_bboxs = len(areas)
+        return sample
+
+
     def process_sample(self):
         sample_path, img_name = self.camera.save_single_image()
         self.console.log_msg(logging.INFO, "Processing prediction...")
+
+        # Feed CNN model with the recent image
         self.predict(sample_path, img_name)
         self.console.log_msg(logging.INFO, "New sample processed")
-        sample_id = os.path.basename(sample_path) + "_" + self.generate_random_id(5)
-        new_sample = Sample(sample_id)
-        new_sample.sample_path = sample_path
-        self.sampled_images.update({sample_id: new_sample})
-        self.listView.insertItem(0, QListWidgetItem(sample_id))
-        self.load_img_in_display(sample_id)
-        self.last_measurment = new_sample
-        self.last_selected_sample = sample_id
+
+        # Compute data from labels
+        sample = self.generate_sample_data(sample_path, img_name)
+        self.sampled_images.update({sample.identity: sample})
+        self.listView.insertItem(0, QListWidgetItem(sample.identity))
+        self.load_img_in_display(sample.identity)
+        self.last_measurment = sample
+        self.last_selected_sample = sample.identity
         self.take_sample_button.setEnabled(True)
         self.start_liveview_button.setEnabled(True)
-        self.console.log_msg(logging.INFO, "Finish to process " + str(sample_id))
-
+        self.console.log_msg(logging.INFO, "Finish to process " + str(sample.identity))
 
 
     def take_sample(self):
