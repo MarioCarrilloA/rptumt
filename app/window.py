@@ -281,19 +281,14 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.stop_monitor_button.setEnabled(True)
         self.console.log_msg(logging.INFO, "starting monitoring process ...")
         self.monitor_timer = QTimer(self)
-        self.monitor_timer.timeout.connect(lambda:self.update_state())
-        self.monitor_timer.start(1000)
-        self.monitor_thread = threading.Thread(target=self.start_monitoring)
-        self.monitor_thread.start()
-        self.monitor_running = True
-        self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Stop monitoring", None))
+        self.monitor_timer.timeout.connect(lambda:self.take_sample())
+
+        # Timer every 5 seconds at the moment
+        self.monitor_timer.start(5000)
 
 
     def stop_monitor(self):
-        self.monitor_running = False
-        self.monitor_thread.join()
         self.console.log_msg(logging.INFO, "stopping monitoring process ...")
-        self.monitor_button.setText(QCoreApplication.translate("MainWindow", u"Start monitoring", None))
         self.monitor_timer.stop()
         self.start_monitor_button.setEnabled(True)
         self.start_liveview_button.setEnabled(True)
