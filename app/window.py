@@ -18,6 +18,7 @@ from guiapp import *
 from yolov5_upstream import detect
 from sample import *
 
+
 class MainWindow(QMainWindow, guiApp):
     def __init__(self, app):
         super().__init__()
@@ -42,7 +43,7 @@ class MainWindow(QMainWindow, guiApp):
         self.ref_x = []
         self.ref_y = []
         #self.ref_line = self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
-        self.msu_line = self.status_chart.plot(self.data_x, self.data_y, name="measurements",
+        self.estimated_size_line = self.status_chart.plot(self.data_x, self.data_y, name="measurements",
                     pen='b', symbol='o', symbolSize=5)
 
         self.monitor_queue = Queue()
@@ -80,7 +81,12 @@ class MainWindow(QMainWindow, guiApp):
         self.last_selected_sample = None
 
         # Test
-        self.bboxes_area_mean.setText("99999")
+        self.total_bboxes.setText("NA")
+        self.bboxes_area_mean.setText("NA")
+        self.bboxes_area_sd.setText("NA")
+        self.estimated_size.setText("NA")
+        self.status.setText("NA")
+        self.total_images.setText("NA")
 
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
@@ -125,6 +131,12 @@ class MainWindow(QMainWindow, guiApp):
         return areas
 
 
+    def estimate_object_size(self, x):
+        #size = 54.6533 + (274658.1545 * x) - (32493746.2635 * pow(x, 2))
+        size = 49.7559 + (282642.6953 * x) - (34327751.6515 * pow(x, 2))
+        return size
+
+
     def generate_sample_data(self, sample_path, img_name):
         label_path = sample_path + "/prediction/labels"
         label_files = glob.glob(label_path + "/*.txt")
@@ -144,14 +156,31 @@ class MainWindow(QMainWindow, guiApp):
         if (len(areas) >= 3):
             mean = statistics.mean(areas)
             sd = statistics.stdev(areas)
+            estimated_size = estimate_object_size(mean)
             sample.mean = mean
             sample.sd = sd
+            sample.estimated_size = estimated_size
             sample.status = "VALID"
         else:
             self.console.log_msg(logging.WARNING, "Invalid: not enough data to compute statistics")
         sample.areas = areas
-        sample.total_bboxs = len(areas)
+        sample.total_bboxes = len(areas)
         return sample
+
+
+    def update_info_panel(self, sample):
+        self.bboxes_area_mean.setText(str(sample.mean))
+        self.bboxes_area_sd.setText(str(sample.sd))
+        self.estimated_size.setText(str(sample.estimated_size))
+        self.status.setText(sample.status)
+        self.total_bboxes.setText(str(sample.total_bboxes))
+
+
+    def display_data(self, sample):
+        self.data_y.append(sample.estimated_size)
+        self.data_x = list(range(len(self.data_y)))
+        self.estimated_size_line.setData(self.data_x, self.data_y)
+        #self.update_info_panel(sample)
 
 
     def process_sample(self):
@@ -172,6 +201,7 @@ class MainWindow(QMainWindow, guiApp):
         self.take_sample_button.setEnabled(True)
         self.start_liveview_button.setEnabled(True)
         self.console.log_msg(logging.INFO, "Finish to process " + str(sample.identity))
+        self.display_data(sample)
 
 
     def take_sample(self):
@@ -221,7 +251,7 @@ class MainWindow(QMainWindow, guiApp):
             # Reference data
             self.ref_x = list(range(len(self.data_y) + 5))
             self.ref_y = [0.5] * (len(self.data_y) + 5)
-            self.msu_line.setData(self.data_x, self.data_y)
+            self.estimated_size_line.setData(self.data_x, self.data_y)
             self.ref_line.setData(self.ref_x, self.ref_y)
             self.console.log_msg(logging.INFO, str(data))
 
