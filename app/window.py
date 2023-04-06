@@ -19,7 +19,11 @@ from yolov5_upstream import detect
 from sample import *
 
 
-class MainWindow(QMainWindow, guiApp):
+class MainWindow(QMainWindow, guiApp, QObject):
+    # Signal to check when the thread has finished
+    # to process and image
+    image_processed = pyqtSignal()
+
     def __init__(self, app):
         super().__init__()
         self.setupUi(self)
@@ -33,15 +37,12 @@ class MainWindow(QMainWindow, guiApp):
 
         # Start a new worker thread and connect the slots for the worker
         self.console.start_thread()
-        #self.sampling_button.clicked.connect(self.take_sample)
 
         # MONITORING
         self.monitor_timer = QTimer(self)
         self.monitor_running = False
         self.data_x = []
         self.data_y = []
-        self.ref_x = []
-        self.ref_y = []
         #self.ref_line = self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
         self.estimated_size_line = self.status_chart.plot(self.data_x, self.data_y, name="measurements",
                     pen='b', symbol='o', symbolSize=5)
@@ -87,6 +88,32 @@ class MainWindow(QMainWindow, guiApp):
         self.estimated_size.setText("NA")
         self.status.setText("NA")
         self.total_images.setText("NA")
+
+        # Connect to receive signal from thread
+        self.image_processed.connect(self.show_sample_statistics)
+
+
+    @QtCore.pyqtSlot()
+    def show_sample_statistics(self):
+        sample = self.last_measurment
+ 
+        # Format output
+        mean = "{:.8f}".format(sample.mean)
+        sd = "{:.8f}".format(sample.sd)
+        estimated_size = "{:.2f}".format(sample.estimated_size)
+        status = sample.status
+        total_bboxes = str(sample.total_bboxes)
+        total_images = str(len(self.data_x))
+
+        # Set output
+        self.bboxes_area_mean.setText(mean)
+        self.bboxes_area_sd.setText(sd)
+        self.estimated_size.setText(estimated_size)
+        self.status.setText(status)
+        self.total_bboxes.setText(total_bboxes)
+        self.total_images.setText(total_images)
+        self.console.log_msg(logging.INFO, "Update control panel information")
+
 
     def show_default_view(self):
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
@@ -156,7 +183,7 @@ class MainWindow(QMainWindow, guiApp):
         if (len(areas) >= 3):
             mean = statistics.mean(areas)
             sd = statistics.stdev(areas)
-            estimated_size = estimate_object_size(mean)
+            estimated_size = self.estimate_object_size(mean)
             sample.mean = mean
             sample.sd = sd
             sample.estimated_size = estimated_size
@@ -176,11 +203,10 @@ class MainWindow(QMainWindow, guiApp):
         self.total_bboxes.setText(str(sample.total_bboxes))
 
 
-    def display_data(self, sample):
+    def update_data_plot(self, sample):
         self.data_y.append(sample.estimated_size)
         self.data_x = list(range(len(self.data_y)))
         self.estimated_size_line.setData(self.data_x, self.data_y)
-        #self.update_info_panel(sample)
 
 
     def process_sample(self):
@@ -201,7 +227,10 @@ class MainWindow(QMainWindow, guiApp):
         self.take_sample_button.setEnabled(True)
         self.start_liveview_button.setEnabled(True)
         self.console.log_msg(logging.INFO, "Finish to process " + str(sample.identity))
-        self.display_data(sample)
+        self.update_data_plot(sample)
+
+        # Emit signal to update information on GUI
+        self.image_processed.emit()
 
 
     def take_sample(self):
@@ -239,49 +268,6 @@ class MainWindow(QMainWindow, guiApp):
         image_key = item.text()
         self.last_selected_sample = image_key
         self.load_img_in_display(image_key)
-
-
-    def update_plot(self):
-        self.console.log_msg(logging.INFO, "updating plot")
-        if not self.monitor_queue.empty():
-            data = self.monitor_queue.get()
-            self.data_y.append(data)
-            self.data_x = list(range(len(self.data_y)))
-
-            # Reference data
-            self.ref_x = list(range(len(self.data_y) + 5))
-            self.ref_y = [0.5] * (len(self.data_y) + 5)
-            self.estimated_size_line.setData(self.data_x, self.data_y)
-            self.ref_line.setData(self.ref_x, self.ref_y)
-            self.console.log_msg(logging.INFO, str(data))
-
-            # Update info
-            self.last_point.setText("{:.6f}".format(data))
-            self.total_samples.setText(str(len(self.data_x)))
-
-
-    def start_monitoring(self):
-        self.console.log_msg(logging.INFO, "Starting video loop")
-        count = 0
-        measurement_flag = True
-        while self.monitor_running:
-            if measurement_flag == True:
-                self.console.log_msg(logging.INFO, "getting measurement")
-                avg_area = random.uniform(50, 600)
-                self.monitor_queue.put(avg_area)
-                measurement_flag = False
-            count+=1
-            if (count == SAMPLING_TIME):
-                count=0
-                measurement_flag=True
-            time.sleep(1)
-
-        self.console.log_msg(logging.INFO, "monitor process finished")
-
-
-    def update_state(self):
-        self.update_plot()
-        #self.take_sample()
 
 
     def start_monitor(self):
