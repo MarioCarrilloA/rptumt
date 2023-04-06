@@ -44,8 +44,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.data_x = []
         self.data_y = []
         #self.ref_line = self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
-        self.estimated_size_line = self.status_chart.plot(self.data_x, self.data_y, name="measurements",
-                    pen='b', symbol='o', symbolSize=5)
+
+        self.estimated_size_line = self.status_chart.plot(self.data_x, self.data_y,
+                    pen='magenta', symbol='o', symbolPen="blue", symbolSize=5)
 
         self.monitor_queue = Queue()
         self.local_image_queue = Queue()

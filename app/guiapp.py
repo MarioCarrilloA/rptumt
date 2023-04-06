@@ -86,14 +86,16 @@ class guiApp(object):
         self.status_chart = pyqtgraph.PlotWidget(self.gBoxChart)
         self.status_chart.setGeometry(QRect(10, 25, 555, 345))
         self.status_chart.setBackground('w')
-        self.status_chart.setTitle("Estimated average size", color="b", size="12pt")
+        self.status_chart.setTitle("Estimated average size", color="b", size="14pt")
         self.status_chart.addLegend()
+        self.status_chart.getAxis('left').setTextPen('black')
+        self.status_chart.getAxis('bottom').setTextPen('black')
+        #self.styles = {"color": "blue", "font-size": "14px", "font-weight": "bold"}
         self.styles = {"color": "blue", "font-size": "14px"}
         self.status_chart.setLabel("left", "object size um", **self.styles)
         self.status_chart.setLabel("bottom", "Sample number", **self.styles)
         self.status_chart.showGrid(x=True, y=True)
         self.status_chart.setYRange(0, 600, padding=0)
-
 
         # Sampled images
         self.gBoxSamples = QGroupBox(self.centralwidget)
