@@ -74,6 +74,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.start_monitor_button.clicked.connect(self.start_monitor)
         self.stop_monitor_button.clicked.connect(self.stop_monitor)
         self.take_sample_button.clicked.connect(self.take_sample)
+        self.quit_button.clicked.connect(self.quit)
         self.raw_radiobutton.clicked.connect(self.display_image_type)
         self.predicted_radiobutton.clicked.connect(self.display_image_type)
 
@@ -92,11 +93,14 @@ class MainWindow(QMainWindow, guiApp, QObject):
         # Connect to receive signal from thread
         self.image_processed.connect(self.show_sample_statistics)
 
+    def quit(self):
+        self.console.log_msg(logging.INFO, "Exit...")
+        QCoreApplication.instance().quit()
 
     @QtCore.pyqtSlot()
     def show_sample_statistics(self):
         sample = self.last_measurment
- 
+
         # Format output
         mean = "{:.8f}".format(sample.mean)
         sd = "{:.8f}".format(sample.sd)
