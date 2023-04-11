@@ -4,6 +4,7 @@ import glob
 import logging
 import numpy as np
 import os
+import platform
 import pyqtgraph
 import random
 import statistics
@@ -129,7 +130,24 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def show_default_view(self):
+        # Message configuration
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.5
+        thickness = 1
+        color = (0, 255, 0) # Green color
+        system_info = str("Platform: " + platform.system() + " - " + platform.machine())
+        ct = str("System initialized: " + datetime.now().strftime('%d-%m-%Y'))
+
+        # Empty image
         img = np.zeros([self.heigt, self.width, 3], dtype=np.uint8)
+
+        # Write message in default frame
+        img = cv2.putText(img, 'No available data to display', (10, 20),
+            font, font_scale, color, thickness, cv2.LINE_AA)
+        img = cv2.putText(img, system_info, (10, 40), font,
+            font_scale, color, thickness, cv2.LINE_AA)
+        img = cv2.putText(img, ct, (10, 60), font,
+            font_scale, color, thickness, cv2.LINE_AA)
         self.display_image(img, self.disp, 1)
 
 
