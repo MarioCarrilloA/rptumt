@@ -182,28 +182,36 @@ class guiApp(object):
         # Buttons for monitoring control
         self.monitor_label = QLabel("Monitoring control", self.gBoxControl)
         self.monitor_label.setFont(QFont('Arial', 16))
-        self.monitor_label.move(250, 40)
+        self.monitor_label.move(245, 40)
         self.monitor_label.setStyleSheet("QLabel { color : purple; }");
 
         self.start_monitor_button = QPushButton(self.gBoxControl)
-        self.start_monitor_button.setGeometry(QRect(255, 80, 52, 52))
+        self.start_monitor_button.setGeometry(QRect(220, 80, 52, 52))
         self.start_monitor_button.setIcon(QIcon('../imgs/icons/play_monitor.png'))
         self.start_monitor_button.setIconSize(QSize(48, 48))
         self.start_monitor_button.setToolTip("Start monitoring")
 
         self.stop_monitor_button = QPushButton(self.gBoxControl)
-        self.stop_monitor_button.setGeometry(QRect(309, 80, 52, 52))
+        self.stop_monitor_button.setGeometry(QRect(274, 80, 52, 52))
         self.stop_monitor_button.setIcon(QIcon('../imgs/icons/stop_monitor.png'))
         self.stop_monitor_button.setIconSize(QSize(48, 48))
         self.stop_monitor_button.setToolTip("Stop monitoring")
         self.stop_monitor_button.setEnabled(False)
 
         self.take_sample_button = QPushButton(self.gBoxControl)
-        self.take_sample_button.setGeometry(QRect(363, 80, 52, 52))
+        self.take_sample_button.setGeometry(QRect(328, 80, 52, 52))
         self.take_sample_button.setIcon(QIcon('../imgs/icons/take_sample.png'))
         self.take_sample_button.setToolTip("Take a sample")
         self.take_sample_button.setIconSize(QSize(48, 48))
 
+        self.config_button = QPushButton(self.gBoxControl)
+        self.config_button.setGeometry(QRect(382, 80, 52, 52))
+        self.config_button.setIcon(QIcon('../imgs/icons/configuration.png'))
+        self.config_button.setToolTip("Configuration")
+        self.config_button.setIconSize(QSize(48, 48))
+
+
+        # Quit button
         self.quit_label = QLabel("Quit", self.gBoxControl)
         self.quit_label.setFont(QFont('Arial', 16))
         self.quit_label.move(490, 40)
