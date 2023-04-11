@@ -13,6 +13,7 @@ import threading
 import time
 
 from camera import *
+from configapp import *
 from datetime import datetime
 from guiapp import *
 from yolov5_upstream import detect
@@ -38,16 +39,13 @@ class MainWindow(QMainWindow, guiApp, QObject):
         # Start a new worker thread and connect the slots for the worker
         self.console.start_thread()
 
-        # MONITORING
+        # Components to compute and plot statistics
         self.monitor_timer = QTimer(self)
         self.monitor_running = False
         self.data_x = []
         self.data_y = []
-        #self.ref_line = self.status_chart.plot(self.ref_x, self.ref_y, name="100um size", pen='r')
-
         self.estimated_size_line = self.status_chart.plot(self.data_x, self.data_y,
                     pen='magenta', symbol='o', symbolPen="blue", symbolSize=5)
-
         self.monitor_queue = Queue()
         self.local_image_queue = Queue()
         self.liveview_enabled = False
@@ -75,6 +73,8 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.start_monitor_button.clicked.connect(self.start_monitor)
         self.stop_monitor_button.clicked.connect(self.stop_monitor)
         self.take_sample_button.clicked.connect(self.take_sample)
+        self.take_sample_button.clicked.connect(self.take_sample)
+        self.config_button.clicked.connect(self.configure)
         self.quit_button.clicked.connect(self.quit)
         self.raw_radiobutton.clicked.connect(self.display_image_type)
         self.predicted_radiobutton.clicked.connect(self.display_image_type)
@@ -83,7 +83,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.last_measurment = None
         self.last_selected_sample = None
 
-        # Test
+        # Set default values
         self.total_bboxes.setText("NA")
         self.bboxes_area_mean.setText("NA")
         self.bboxes_area_sd.setText("NA")
@@ -93,6 +93,14 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
         # Connect to receive signal from thread
         self.image_processed.connect(self.show_sample_statistics)
+
+        # Create instance of configuration
+        self.config = Configuration()
+
+
+    def configure(self):
+        self.config.show()
+        self.console.log_msg(logging.INFO, "Configure")
 
     def quit(self):
         self.console.log_msg(logging.INFO, "Exit...")
@@ -276,6 +284,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def start_monitor(self):
+        sampling_time = self.config.get_sampling_time()
+        self.console.log_msg(logging.INFO, "starting monitoring process...")
+        self.console.log_msg(logging.INFO, "sampling time: " + str(sampling_time) + "(sec)")
+        ###########################
         self.start_monitor_button.setEnabled(False)
         self.start_liveview_button.setEnabled(False)
         self.stop_monitor_button.setEnabled(True)
@@ -284,7 +296,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.monitor_timer.timeout.connect(lambda:self.take_sample())
 
         # Timer every 5 seconds at the moment
-        self.monitor_timer.start(5000)
+        self.monitor_timer.start(sampling_time * 1000)
 
 
     def stop_monitor(self):
