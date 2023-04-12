@@ -303,8 +303,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
     def start_monitor(self):
         sampling_time = self.config.get_sampling_time()
         self.console.log_msg(logging.INFO, "starting monitoring process...")
-        self.console.log_msg(logging.INFO, "sampling time: " + str(sampling_time) + "(sec)")
+        self.console.log_msg(logging.INFO, "sampling time: " + str(sampling_time) + " seconds")
         ###########################
+        self.config_button.setEnabled(False)
         self.start_monitor_button.setEnabled(False)
         self.start_liveview_button.setEnabled(False)
         self.stop_monitor_button.setEnabled(True)
@@ -319,6 +320,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
     def stop_monitor(self):
         self.console.log_msg(logging.INFO, "stopping monitoring process ...")
         self.monitor_timer.stop()
+        self.config_button.setEnabled(True)
         self.start_monitor_button.setEnabled(True)
         self.start_liveview_button.setEnabled(True)
         self.stop_monitor_button.setEnabled(False)
