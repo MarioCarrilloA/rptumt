@@ -74,7 +74,6 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.start_monitor_button.clicked.connect(self.start_monitor)
         self.stop_monitor_button.clicked.connect(self.stop_monitor)
         self.take_sample_button.clicked.connect(self.take_sample)
-        self.take_sample_button.clicked.connect(self.take_sample)
         self.config_button.clicked.connect(self.configure)
         self.quit_button.clicked.connect(self.quit)
         self.raw_radiobutton.clicked.connect(self.display_image_type)
