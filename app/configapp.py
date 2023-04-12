@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
 
 
 class Configuration(QWidget):
-    def __init__(self, sampling_time=5):
+    def __init__(self, sampling_time=10):
         super().__init__()
         self.sampling_time = sampling_time
         self.resize(150, 100)
@@ -48,8 +48,8 @@ class Configuration(QWidget):
         sampling_time = self.sampling_time_box.text()
         # Validate sampling time input
         if sampling_time.isdigit():
-            if sampling_time == "0" or sampling_time == "1" or sampling_time == "2":
-                self.show_error_msg("Sampling time has to be greater than 2 seconds")
+            if int(sampling_time) < 5:
+                self.show_error_msg("Sampling time has to be greater or equal than 5 seconds")
             else :
                 print("correct input")
                 self.sampling_time = int(sampling_time)

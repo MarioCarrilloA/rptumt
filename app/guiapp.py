@@ -2,25 +2,12 @@
 # but many changes were added manually.
 ##################################################################
 
-from PyQt5.QtCore import *  # type: ignore
-from PyQt5.QtGui import *  # type: ignore
-from PyQt5.QtWidgets import *  # type: ignore
-from PyQt5.QtWidgets import (
-        QApplication,
-        QMainWindow,
-        QPushButton,
-        QLabel,
-        QVBoxLayout,
-        QWidget,
-        QLineEdit,
-        QFormLayout
-)
-import sys
-
-
 import pyqtgraph
 
 from console import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 # Image widget
 class ImageWidget(QWidget):
@@ -90,7 +77,6 @@ class guiApp(object):
         self.status_chart.addLegend()
         self.status_chart.getAxis('left').setTextPen('black')
         self.status_chart.getAxis('bottom').setTextPen('black')
-        #self.styles = {"color": "blue", "font-size": "14px", "font-weight": "bold"}
         self.styles = {"color": "blue", "font-size": "14px"}
         self.status_chart.setLabel("left", "object size um", **self.styles)
         self.status_chart.setLabel("bottom", "Sample number", **self.styles)
@@ -106,7 +92,6 @@ class guiApp(object):
         self.listView = QListWidget(self.gBoxSamples)
         self.listView.setObjectName(u"listView")
         self.listView.setGeometry(QRect(10, 25, 260, 345))
-        #self.gBoxSamples.setEnabled(False)
         self.listView.itemClicked.connect(self.clicked_list)
 
         # status information
