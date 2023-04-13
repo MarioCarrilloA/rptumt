@@ -19,3 +19,24 @@ BUG_REPORT_URL="https://bugs.debian.org/"
 ```
 
 Could run on a Raspberry Pi 3, but preferred on a Raspberry Pi 4
+
+## Installation & run
+
+1. You can install the dependencies by typing:
+
+```
+bash  install_pkgs.sh
+```
+
+2. It is necessary to download and use some modules from [YOLOv5](https://github.com/ultralytics/yolov5).
+   the following command clones the repository and locates the relevant code in the correct path
+
+```
+bash  prework.sh
+```
+
+3. The application is executed by:
+
+```
+bash  run.sh
+```
