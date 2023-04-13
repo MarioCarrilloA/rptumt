@@ -8,5 +8,5 @@ if [ ! -d "$APP" ]; then
 fi
 
 pushd "$APP"
-    python main.py
+python main.py
 popd

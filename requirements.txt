@@ -1,2 +1,10 @@
-pyqtgraph
-opencv-python-headless
+pyqtgraph>=0.13.1
+torch==1.13.1
+torchvision==0.14.1
+opencv-python-headless>=4.7.0.68
+pyserial>=3.5b0
+pandas>=1.5.3
+PyYAML==5.3.1
+tqdm>=4.64.1
+matplotlib>=3.3.4
+seaborn==0.12.2
