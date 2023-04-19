@@ -2,6 +2,7 @@ import random
 import string
 import cv2
 
+# Class to save information about every sample
 class Sample():
     def __init__(self, identity="undefined"):
         self.identity = identity
@@ -18,6 +19,7 @@ class Sample():
     def load_sample_image(self):
         img = cv2.imread(self.sample_path + "/" + self.image_name)
         return img
+
 
     def load_predicted_image(self):
         img = cv2.imread(self.sample_path + "/prediction/" + self.image_name)

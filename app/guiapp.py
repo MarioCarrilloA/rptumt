@@ -9,7 +9,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
-# Image widget
+
+# Reference for this class:
+# https://iosoft.blog/cam-display/
 class ImageWidget(QWidget):
     def __init__(self, parent=None):
         super(ImageWidget, self).__init__(parent)
@@ -28,6 +30,7 @@ class ImageWidget(QWidget):
         qp.end()
 
 
+# GUI components
 class guiApp(object):
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("3DSCIP Viewer")

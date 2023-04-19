@@ -1,4 +1,4 @@
-# This code is base on:
+# Reference for this code:
 # https://gist.github.com/vsajip/a87bd7f4234510b4fd6bdcd4ffea376d
 
 import logging
@@ -38,10 +38,11 @@ class Console(QPlainTextEdit):
         self.worker = Worker()
         self.worker_thread = QtCore.QThread()
         self.worker.setObjectName('Worker')
-        self.worker_thread.setObjectName('WorkerThread')  # for qThreadName
+        self.worker_thread.setObjectName('WorkerThread')
         self.worker.moveToThread(self.worker_thread)
         # This will start an event loop in the worker thread
         self.worker_thread.start()
+
 
     def kill_thread(self):
         self.worker_thread.requestInterruption()
@@ -50,6 +51,7 @@ class Console(QPlainTextEdit):
             self.worker_thread.wait()
         else:
             print('worker has already exited.')
+
 
     def force_quit(self):
         if self.worker_thread.isRunning():
@@ -66,6 +68,7 @@ class Console(QPlainTextEdit):
     @Slot()
     def log_msg(self, level, msg):
         logger.log(level, msg)
+
 
     @Slot()
     def clear_display(self):

@@ -9,9 +9,9 @@ def nothing(x):
 
 # read the experimental image
 original = cv2.imread(imgfile)
+
 # create trackbar for canny edge detection threshold changes
 cv2.namedWindow('canny')
-
 
 # add lower and upper threshold slidebars to "canny"
 cv2.createTrackbar('lower', 'canny', 0, 255, nothing)

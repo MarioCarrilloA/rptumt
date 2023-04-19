@@ -30,6 +30,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
         super().__init__()
         self.setupUi(self)
 
+        # Console only show messages
         self.console.setReadOnly(True)
         app.aboutToQuit.connect(self.console.force_quit)
 
@@ -49,7 +50,6 @@ class MainWindow(QMainWindow, guiApp, QObject):
                     pen='magenta', symbol='o', symbolPen="blue", symbolSize=5)
         self.monitor_queue = Queue()
         self.local_image_queue = Queue()
-        self.liveview_enabled = False
 
         # Camera settings
         self.width = 1280
@@ -97,14 +97,29 @@ class MainWindow(QMainWindow, guiApp, QObject):
         # Create instance of configuration
         self.config = Configuration()
 
+        # Flags to exit the program correctly
+        self.liveview_active = False
+        self.monitoring_active = False
+
 
     def configure(self):
         self.config.show()
         self.console.log_msg(logging.INFO, "Configure")
 
+
     def quit(self):
+        # Finish active tasks
+        if (self.liveview_active == True):
+            self.console.log_msg(logging.WARNING, "Liveview process is active")
+            self.stop_liveview()
+
+        if (self.monitoring_active == True):
+            self.console.log_msg(logging.WARNING, "Monitoring process is active")
+            self.stop_monitor()
+
         self.console.log_msg(logging.INFO, "Exit...")
         QCoreApplication.instance().quit()
+
 
     @QtCore.pyqtSlot()
     def show_sample_statistics(self):
@@ -304,7 +319,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
         sampling_time = self.config.get_sampling_time()
         self.console.log_msg(logging.INFO, "starting monitoring process...")
         self.console.log_msg(logging.INFO, "sampling time: " + str(sampling_time) + " seconds")
-        ###########################
+        self.monitoring_active = True
         self.config_button.setEnabled(False)
         self.start_monitor_button.setEnabled(False)
         self.start_liveview_button.setEnabled(False)
@@ -313,12 +328,14 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.monitor_timer = QTimer(self)
         self.monitor_timer.timeout.connect(lambda:self.take_sample())
 
-        # Timer every 5 seconds at the moment
+        # Timer every 10 seconds by default
+        # The seconds will be converted to milliseconds
         self.monitor_timer.start(sampling_time * 1000)
 
 
     def stop_monitor(self):
         self.console.log_msg(logging.INFO, "stopping monitoring process ...")
+        self.monitoring_active = False
         self.monitor_timer.stop()
         self.config_button.setEnabled(True)
         self.start_monitor_button.setEnabled(True)
@@ -329,6 +346,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
     def start_liveview(self):
         self.console.log_msg(logging.WARNING,
             "long exposure of the culture to light may affect the incubation process.")
+        self.liveview_active = True
         self.camera.enable_capture()
         self.console.log_msg(logging.INFO, "starting live view session ...")
         self.timer = QTimer(self)
@@ -345,10 +363,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
     def stop_liveview(self):
         self.console.log_msg(logging.INFO, "stopping live view session...")
+        self.liveview_active = False
         self.camera.disable_capture()
         print("waiting for thread")
         self.capture_thread.join()
-
         print("shows black background")
         self.show_default_view()
         self.timer.stop()
