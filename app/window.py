@@ -1,3 +1,4 @@
+import csv
 import cv2
 import datetime
 import glob
@@ -254,6 +255,24 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.estimated_size_line.setData(self.data_x, self.data_y)
 
 
+    def log_sample(self, s):
+        log_sample_file = self.camera.experiment_id + "/samples.csv"
+        row = []
+        header = []
+        if os.path.isfile(log_sample_file) == False:
+            header = ["sample", "mean", "sd", "numsamples", "Esize", "status"]
+        with open (log_sample_file,'a') as csvfile:
+            fwriter = csv.writer(csvfile, delimiter=',')
+            row.append(s.sample_path + "/" + s.image_name)
+            row.append(s.mean)
+            row.append(s.sd)
+            row.append(s.total_bboxes)
+            row.append(s.estimated_size)
+            row.append(s.status)
+            if len(header) != 0:
+                fwriter.writerow(header)
+            fwriter.writerow(row)
+
     def process_sample(self):
         sample_path, img_name = self.camera.save_single_image()
         self.console.log_msg(logging.INFO, "Processing prediction...")
@@ -273,6 +292,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.start_liveview_button.setEnabled(True)
         self.console.log_msg(logging.INFO, "Finish to process " + str(sample.identity))
         self.update_data_plot(sample)
+        self.log_sample(sample)
 
         # Emit signal to update information on GUI
         self.image_processed.emit()
