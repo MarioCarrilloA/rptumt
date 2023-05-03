@@ -1,0 +1,144 @@
+library(ggplot2)
+
+models <- c(
+            "YOLOv5n",
+            "YOLOv5s",
+            "YOLOv5m",
+            "YOLOv5l",
+            "YOLOv5x")
+
+benchmark_time <- c(
+              61.91,
+              92.46,
+              184.44,
+              332.67,
+              588.34)
+
+benchmark_data <- data.frame(models=models,
+                     benchmark_time=benchmark_time)
+benchmark_data$models <- factor(benchmark_data$models,
+                                    levels=benchmark_data$models)
+
+ggplot(benchmark_data, aes(x=models, y=benchmark_time, fill=models)) + 
+  geom_bar(stat="identity") +
+  ylab("Benchmark execution time (seconds)") +
+  xlab("YOLOv5 models") +
+  theme_light() +
+  ggtitle("Benchmark latency - RaspBryP4 (lower is better)") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette = "Reds")
+#Accent
+
+#################################################
+
+models <- c(
+  "default",
+  "YOLOv5n",
+  "YOLOv5s",
+  "YOLOv5m",
+  "YOLOv5l",
+  "YOLOv5x")
+benchmark_time <- c(
+  0.3999,
+  0.7572,
+  1.7543,
+  3.4057,
+  6.1703)
+
+benchmark_data <- data.frame(models=models,
+                             benchmark_time=benchmark_time)
+benchmark_data$models <- factor(benchmark_data$models,
+                                levels=benchmark_data$models)
+
+ggplot(benchmark_data, aes(x=models, y=benchmark_time, fill=models)) + 
+  geom_bar(stat="identity") +
+  ylab("Benchmark execution time (seconds)") +
+  xlab("Models") +
+  ggtitle("Benchmark latency - RaspBryP4 (lower is better)") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_light()
+
+
+data <- read.csv("PH.csv")
+data
+#install.packages("data.table")
+#library("data.table")
+#a <- setorder(data, True.pH)
+#a
+n <- length(data$True.pH)
+x <- seq(1:n)
+truePH <- data$True.pH
+predPH <- data$Predicted.pH
+
+
+dev.off()
+plot(x, truePH,  col="red", pch=1, type = "o",
+     main="mTeSR Medium pH - ground truth vs prediction",
+     xlab="Sample", ylab="pH value", ylim=c(4,10))
+lines(x, predPH, col="blue", pch=20, type = "o")
+op <- par(cex = 0.7)
+legend("topright",
+       legend=c("Ground truth", "Predicted"),
+       lty=c(1, 1),
+       pch=c(1, 20),
+       col=c("red", "blue"))
+
+
+################################################################
+################################################################
+# Bar chart for Raspberry 3
+################################################################
+################################################################
+
+models <- c(
+  "YOLOv5n",
+  "YOLOv5s",
+  "YOLOv5m")
+
+benchmark_time <- c(
+  13.37,
+  25.40,
+  64.18)
+
+benchmark_data <- data.frame(models=models,
+                             benchmark_time=benchmark_time)
+benchmark_data$models <- factor(benchmark_data$models,
+                                levels=benchmark_data$models)
+
+ggplot(benchmark_data, aes(x=models, y=benchmark_time, fill=models)) + 
+  geom_bar(stat="identity") +
+  ylab("Benchmark execution time (seconds)") +
+  xlab("YOLOv5 models") +
+  theme_light() +
+  ggtitle("Benchmark latency - RaspBryP3 (lower is better)") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette = "Reds")
+
+
+######################################################
+# pH
+######################################################
+
+models <- c(
+  "RBPi 3",
+  "RBPi 4")
+
+benchmark_time <- c(
+  3.7508,
+  1.4799)
+
+benchmark_data <- data.frame(models=models,
+                             benchmark_time=benchmark_time)
+benchmark_data$models <- factor(benchmark_data$models,
+                                levels=benchmark_data$models)
+
+ggplot(benchmark_data, aes(x=models, y=benchmark_time, fill=models)) + 
+  geom_bar(stat="identity") +
+  ylab("AVG time of pH  prediction per image (seconds)") +
+  xlab("Embedded platform") +
+  theme_light() +
+  ggtitle("Benchmark latency - Raspberry pi 3 vs 4 (lower is better)") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette = "Set1")
+
+
