@@ -273,6 +273,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
                 fwriter.writerow(header)
             fwriter.writerow(row)
 
+
     def process_sample(self):
         sample_path, img_name = self.camera.save_single_image()
         self.console.log_msg(logging.INFO, "Processing prediction...")
