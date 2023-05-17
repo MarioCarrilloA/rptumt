@@ -18,8 +18,9 @@ from camera import *
 from configapp import *
 from datetime import datetime
 from guiapp import *
-from yolov5_upstream import detect
+from light import *
 from sample import *
+from yolov5_upstream import detect
 
 
 class MainWindow(QMainWindow, guiApp, QObject):
@@ -102,6 +103,8 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.liveview_active = False
         self.monitoring_active = False
 
+        # Init lamp
+        self.lamp = Light()
 
     def configure(self):
         self.config.show()
@@ -275,7 +278,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def process_sample(self):
+        self.lamp.on()
         sample_path, img_name = self.camera.save_single_image()
+        self.lamp.off()
         self.console.log_msg(logging.INFO, "Processing prediction...")
 
         # Feed CNN model with the recent image
@@ -365,6 +370,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def start_liveview(self):
+        self.lamp.on()
         self.console.log_msg(logging.WARNING,
             "long exposure of the culture to light may affect the incubation process.")
         self.liveview_active = True
@@ -383,6 +389,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def stop_liveview(self):
+        self.lamp.off()
         self.console.log_msg(logging.INFO, "stopping live view session...")
         self.liveview_active = False
         self.camera.disable_capture()
@@ -417,5 +424,3 @@ class MainWindow(QMainWindow, guiApp, QObject):
         qimg = QImage(img.data, disp_size[0], disp_size[1],
                       disp_bpl, self.img_format)
         display.setImage(qimg)
-
-

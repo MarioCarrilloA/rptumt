@@ -9,7 +9,6 @@ from picamera2 import Picamera2
 from queue import Queue
 from datetime import datetime
 
-
 SAMPLING_TIME = 1
 CAMERA_PREPARATION_TIME = 2
 
