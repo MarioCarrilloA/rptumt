@@ -1,5 +1,3 @@
-#import detect
-
 from yolov5_upstream import detect
 
 detect.run(

@@ -24,6 +24,9 @@ from yolov5_upstream import detect
 
 
 class MainWindow(QMainWindow, guiApp, QObject):
+    """
+    This is the main window of this graphical user interface
+    """
     # Signal to check when the thread has finished
     # to process and image
     image_processed = pyqtSignal()
@@ -106,12 +109,20 @@ class MainWindow(QMainWindow, guiApp, QObject):
         # Init lamp
         self.lamp = Light()
 
+
     def configure(self):
+        """
+        Shows a second window to modify the current configuration.
+        """
         self.config.show()
         self.console.log_msg(logging.INFO, "Configure")
 
 
     def quit(self):
+        """
+        Finishes active monitoring tasks and then finishes the
+        full application.
+        """
         # Finish active tasks
         if (self.liveview_active == True):
             self.console.log_msg(logging.WARNING, "Liveview process is active")
@@ -127,6 +138,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
     @QtCore.pyqtSlot()
     def show_sample_statistics(self):
+        """
+        Updates the GUI control panel with the statitics computed
+        from the last sample.
+        """
         sample = self.last_measurment
 
         # Format output
@@ -148,6 +163,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def show_default_view(self):
+        """
+        Shows a black image with basic information when the camaera is not active
+        or there are not processed images.
+        """
         # Message configuration
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.5
@@ -170,10 +189,15 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def predict(self, sample_path, img_name):
+        """
+        Predicts the bounding boxes from an input image by using a
+        YOLOv5 trained mode.
+        """
         pwd = os.getcwd()
         predicted_sample_path = sample_path.replace("sample", "predicted")
 
         # Usage of YOLOv5 nano model
+        # TODO: Remove model path harcoded
         model = pwd + "/" + "model/nano.pt"
         input_img = sample_path + "/" + img_name
         detect.run(
@@ -189,11 +213,19 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def generate_random_id(self, k=5):
+        """
+        Generates a string composed of 5 random characteres in order
+        to be concatenated to have unique name.
+        """
         newid = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(k))
         return newid
 
 
     def read_labels(self, label_files):
+        """
+        Reads the label files produced by YOLOv5 and they are added
+        to a python list to compute statistics.
+        """
         areas = []
         print("Computing areas of input files...")
         for label_file in label_files:
@@ -208,12 +240,20 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def estimate_object_size(self, x):
+        """
+        Returns a estimated size in micrometers according to a
+        regression model.
+        """
         #size = 54.6533 + (274658.1545 * x) - (32493746.2635 * pow(x, 2))
         size = 49.7559 + (282642.6953 * x) - (34327751.6515 * pow(x, 2))
         return size
 
 
     def generate_sample_data(self, sample_path, img_name):
+        """
+        Returns a data structure with all information related to
+        a sample
+        """
         label_path = sample_path + "/prediction/labels"
         label_files = glob.glob(label_path + "/*.txt")
 

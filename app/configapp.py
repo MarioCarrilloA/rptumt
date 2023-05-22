@@ -10,6 +10,10 @@ from PyQt5.QtWidgets import (
 
 
 class Configuration(QWidget):
+    """
+    This class is to show a second window (GUI) to modify
+    the sampling configuration.
+    """
     def __init__(self, sampling_time=10):
         super().__init__()
         self.sampling_time = sampling_time
@@ -33,6 +37,9 @@ class Configuration(QWidget):
 
 
     def show_error_msg(self, info):
+        """
+        Shows an error message box for an invalid input
+        """
         self.hide()
         self.sampling_time_box.setText(str(self.sampling_time))
         print("incorrect input")
@@ -44,7 +51,11 @@ class Configuration(QWidget):
         msg.setStandardButtons(QMessageBox.Close)
         msg.exec_()
 
+
     def read_data(self):
+        """
+        Reads the input data from the text boxes
+        """
         sampling_time = self.sampling_time_box.text()
         # Validate sampling time input
         if sampling_time.isdigit():
@@ -59,5 +70,8 @@ class Configuration(QWidget):
 
 
     def get_sampling_time(self):
+        """
+        Gets the wait time to take every image
+        """
         return self.sampling_time
 
