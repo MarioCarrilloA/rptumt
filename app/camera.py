@@ -14,6 +14,10 @@ CAMERA_PREPARATION_TIME = 2
 
 
 class Camera():
+    """
+    Class to handle a HQ Raspberry Pi camera on a Raspberry Pi board v4 wih
+    64-bit operating system
+    """
     def __init__(self):
         self.capturing = False
 
@@ -43,6 +47,10 @@ class Camera():
 
 
     def _get_configured_camera(self):
+        """
+        Creates object to handle the camara by using 'Picamera2' module.
+        Also, it sets the initial configuration.
+        """
         camera = Picamera2()
         camera_config = camera.create_still_configuration(main={"size": (self.width, self.heigh)})
         camera.configure(camera_config)
@@ -65,6 +73,9 @@ class Camera():
 
 
     def grab_frames(self):
+        """
+        Grabs continues frames from the camera until a flag is set as 'False'
+        """
         camera = self._get_configured_camera()
         camera.start()
         logging.info("capturing frames")
@@ -81,6 +92,10 @@ class Camera():
 
 
     def _create_video_capture(self):
+        """
+        Creates object to handle the camara by using 'OpenCV' API.
+        Also, it sets the initial configuration (It is just a reference).
+        """
         cap = cv2.VideoCapture(self.camera_number - 1 + self.cap_api)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
@@ -92,26 +107,10 @@ class Camera():
         return cap
 
 
-    def grab_images(self):
-        cap = self._create_video_capture()
-        logging.info("capturing frames")
-        while self.capturing:
-            if cap.grab():
-                retval, image = cap.retrieve(0)
-                if image is not None and self.image_queue.qsize() < 2:
-                    self.image_queue.put(image)
-                else:
-                    time.sleep(self.cycle_time / 1000.0)
-            else:
-                logging.error("cannot grab frames from camera, session cancelled!")
-                break
-        cap.release()
-
-        img = np.zeros([self.heigh, self.width, 3], dtype=np.uint8)
-        self.image_queue.put(img)
-
-
     def grab_sample_image(self):
+        """
+        Grabs only a single frame and returns it
+        """
         cap = self._create_video_capture()
         logging.info("getting frame from camera")
         if cap.grab():
@@ -122,9 +121,15 @@ class Camera():
 
 
     def disable_capture(self):
+        """
+        Stops the continuous frame grabbing from the HQ camera
+        """
         self.capturing = False
 
 
     def enable_capture(self):
+        """
+        Starts the continuous frame grabbing from the HQ camera
+        """
         self.capturing = True
 
