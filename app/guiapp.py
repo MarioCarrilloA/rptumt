@@ -13,16 +13,28 @@ from PyQt5.QtWidgets import *
 # Reference for this class:
 # https://iosoft.blog/cam-display/
 class ImageWidget(QWidget):
+    """
+    This class is to store the images that will be
+    displayed.
+    """
     def __init__(self, parent=None):
         super(ImageWidget, self).__init__(parent)
         self.image = None
 
+
     def setImage(self, image):
+        """
+        Stores an input image
+        """
         self.image = image
         self.setMinimumSize(image.size())
         self.update()
 
+
     def paintEvent(self, event):
+        """
+        Re-implementation from QWidget to rapaint the widget
+        """
         qp = QPainter()
         qp.begin(self)
         if self.image:
@@ -32,6 +44,10 @@ class ImageWidget(QWidget):
 
 # GUI components
 class guiApp(object):
+    """
+    This class includes all widgets to be displayed in the GUI. This is in order
+    to split backend and frontend.
+    """
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("3DSCIP Viewer")
         MainWindow.setObjectName("3DSCIP Viewer")

@@ -56,6 +56,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.monitor_queue = Queue()
         self.local_image_queue = Queue()
 
+	# TODO: Add support to modify the configuration by using a
+	# YAML file.
+	#
         # Camera settings
         self.width = 1280
         self.heigt = 720
@@ -285,6 +288,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def update_info_panel(self, sample):
+        """
+        Updates the information in the GUI that was computed from a sample.
+        """
         self.bboxes_area_mean.setText(str(sample.mean))
         self.bboxes_area_sd.setText(str(sample.sd))
         self.estimated_size.setText(str(sample.estimated_size))
@@ -293,12 +299,19 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def update_data_plot(self, sample):
+        """
+        Appends an estimated size from a sample into a list in order
+        to be ploted by pyqtgraph.
+        """
         self.data_y.append(sample.estimated_size)
         self.data_x = list(range(len(self.data_y)))
         self.estimated_size_line.setData(self.data_x, self.data_y)
 
 
     def log_sample(self, s):
+        """
+        Collects and save log information into a CSV file.
+        """
         log_sample_file = self.camera.experiment_id + "/samples.csv"
         row = []
         header = []
@@ -318,6 +331,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def process_sample(self):
+        """
+        Turns on the camera and the light and take an image, then turn off
+        everything again. Finally, the image is processed.
+        """
         self.lamp.on()
         sample_path, img_name = self.camera.save_single_image()
         self.lamp.off()
@@ -345,6 +362,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def take_sample(self):
+        """
+        Takes a single image and uses it to compute the full workflow.
+        """
         self.take_sample_button.setEnabled(False)
         self.start_liveview_button.setEnabled(False)
         self.console.log_msg(logging.INFO, "Taking new sample, init camera...")
@@ -353,6 +373,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def display_image_type(self):
+        """
+        Displays a selected image from the panel. If an image is not
+        selected, it displays the last taken image.
+        """
         if self.last_selected_sample == None:
             if self.raw_radiobutton.isChecked():
                 self.console.log_msg(logging.INFO, "Set display raw mode")
@@ -364,6 +388,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def load_img_in_display(self, image_key):
+        """
+        Loads the image in the position [image_key] and displays it
+        """
         sample = self.sampled_images[image_key]
         if self.raw_radiobutton.isChecked():
             img = sample.load_sample_image()
@@ -376,12 +403,19 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def clicked_list(self, item):
+        """
+        Takes action when an image is selected.
+        """
         image_key = item.text()
         self.last_selected_sample = image_key
         self.load_img_in_display(image_key)
 
 
     def start_monitor(self):
+        """
+        Starts a process which collects a sample every lapse of time
+        and it is used to compute the full workflow.
+        """
         sampling_time = self.config.get_sampling_time()
         self.console.log_msg(logging.INFO, "starting monitoring process...")
         self.console.log_msg(logging.INFO, "sampling time: " + str(sampling_time) + " seconds")
@@ -400,6 +434,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def stop_monitor(self):
+        """
+        Stops the porcess which collects continuos samples.
+        """
         self.console.log_msg(logging.INFO, "stopping monitoring process ...")
         self.monitoring_active = False
         self.monitor_timer.stop()
@@ -410,6 +447,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def start_liveview(self):
+        """
+        Turns on the camera and the light and starts to capture frame
+        and they are displayed in the GUI.
+        """
         self.lamp.on()
         self.console.log_msg(logging.WARNING,
             "long exposure of the culture to light may affect the incubation process.")
@@ -429,6 +470,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def stop_liveview(self):
+        """
+        Stops to capture frames and turns off the camera and the light
+        """
         self.lamp.off()
         self.console.log_msg(logging.INFO, "stopping live view session...")
         self.liveview_active = False
@@ -447,6 +491,10 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
     # Fetch camera image from queue, and display it
     def show_image(self, imageq, display, scale):
+        """
+        Dequeues and image from the camera queue and it is processed
+        to be displayed.
+        """
         if not imageq.empty():
             image = imageq.get()
             if image is not None and len(image) > 0:
@@ -456,6 +504,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
     # Display an image, reduce size if required
     def display_image(self, img, display, scale=1):
+        """
+        Displays and image in the GUI
+        """
         disp_size = img.shape[1]//scale, img.shape[0]//scale
         disp_bpl = disp_size[0] * 3
         if scale > 1:
