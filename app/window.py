@@ -116,7 +116,11 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
         # COUNTER
         self.counter = 0
+
+        # TODO: This time means how long the application waits to take a
+        # sample video. In this case it will be every 12 hours.
         self.video_timer = 43200
+
 
     def configure(self):
         """

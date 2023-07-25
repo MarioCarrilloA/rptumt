@@ -30,6 +30,7 @@ class Camera():
         self.camera_number = 1
 
         # Configuration
+        # TODO: Move this configuration to an external YAML file.
         self.width = 1280
         self.heigh = 720
         self.cycle_time = 50
@@ -101,7 +102,7 @@ class Camera():
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.heigh)
         if self.exposure_time:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-            cap.set(cv2.CAP_PROP_EXPOSURE, 2400)
+            cap.set(cv2.CAP_PROP_EXPOSURE, self.exposure_time)
         else:
             cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
         return cap

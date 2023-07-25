@@ -14,6 +14,7 @@ class Configuration(QWidget):
     This class is to show a second window (GUI) to modify
     the sampling configuration.
     """
+    # TODO: Specify sampling time by using a configuration file
     def __init__(self, sampling_time=10):
         super().__init__()
         self.sampling_time = sampling_time
@@ -59,6 +60,8 @@ class Configuration(QWidget):
         sampling_time = self.sampling_time_box.text()
         # Validate sampling time input
         if sampling_time.isdigit():
+            # TODO: For the Raspberry Pi 4, wait 5 seconds is the minimal time to
+            # allows the correct image processing. Replace hardcode by global constant.
             if int(sampling_time) < 5:
                 self.show_error_msg("Sampling time has to be greater or equal than 5 seconds")
             else :

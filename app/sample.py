@@ -2,6 +2,7 @@ import random
 import string
 import cv2
 
+
 class Sample():
     """
     Class to save information about every sample (image) that is
@@ -36,5 +37,8 @@ class Sample():
         """
         if self.sample_path == "undefined":
             return None
+
+        # TODO: Remove hardcode and add support to specify this output
+        # path by using a YAML configuration file.
         img = cv2.imread(self.sample_path + "/prediction/" + self.image_name)
         return img

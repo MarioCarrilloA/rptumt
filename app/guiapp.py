@@ -51,9 +51,14 @@ class guiApp(object):
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("3DSCIP Viewer")
         MainWindow.setObjectName("3DSCIP Viewer")
+
+        # TODO: Get the screen dimensions and replace hardcode
         MainWindow.setFixedSize(1900, 1000)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
+
+        # TODO: Replace the fixed locations by a defined layout in order to
+        # change the size of the widgets according to the window size.
 
         # Viewer
         self.gBoxView = QGroupBox(self.centralwidget)
