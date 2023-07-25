@@ -8,5 +8,6 @@ if [ ! -d "$APP" ]; then
 fi
 
 pushd "$APP"
-python main.py
+echo "Loading application ..."
+python -W ignore main.py
 popd

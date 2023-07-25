@@ -22,6 +22,8 @@ from light import *
 from sample import *
 from yolov5_upstream import detect
 
+import subprocess
+
 
 class MainWindow(QMainWindow, guiApp, QObject):
     """
@@ -56,9 +58,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.monitor_queue = Queue()
         self.local_image_queue = Queue()
 
-	# TODO: Add support to modify the configuration by using a
-	# YAML file.
-	#
+	    # TODO: Add support to modify the configuration by using a
+	    # YAML file.
+
         # Camera settings
         self.width = 1280
         self.heigt = 720
@@ -112,6 +114,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
         # Init lamp
         self.lamp = Light()
 
+        # COUNTER
+        self.counter = 0
+        self.video_timer = 43200
 
     def configure(self):
         """
@@ -201,7 +206,8 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
         # Usage of YOLOv5 nano model
         # TODO: Remove model path harcoded
-        model = pwd + "/" + "model/nano.pt"
+        #model = pwd + "/" + "model/nano.pt"
+        model = pwd + "/" + "model/nano_22_05_2023.pt"
         input_img = sample_path + "/" + img_name
         detect.run(
             weights=model,
@@ -272,6 +278,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
         # Compute statistics
         areas = self.read_labels(label_files)
+
+        # TODO: Remove hardcode
+        # At least 3 objects must be detected to compute statistics
         if (len(areas) >= 3):
             mean = statistics.mean(areas)
             sd = statistics.stdev(areas)
@@ -337,6 +346,17 @@ class MainWindow(QMainWindow, guiApp, QObject):
         """
         self.lamp.on()
         sample_path, img_name = self.camera.save_single_image()
+        ##################################################################
+        # TAKE VIDEO
+        self.counter = self.counter + self.config.get_sampling_time()
+        if self.counter >= self.video_timer:
+            self.counter = 0
+            now = datetime.now()
+            video_id = "/home/pi/Videos/video_" + now.strftime("%d_%m_%Y-%H_%M_%S") + ".h264"
+            subprocess.run(["libcamera-vid", "-t", "8000", "--width", "1280", "--heigh", "720", "--shutter", "2400", "-o", video_id])
+
+        ##################################################################
+
         self.lamp.off()
         self.console.log_msg(logging.INFO, "Processing prediction...")
 
