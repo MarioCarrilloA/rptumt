@@ -1,12 +1,17 @@
 from PyQt5.QtWidgets import (
+    QDesktopWidget,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSpinBox,
+    QTimeEdit,
     QVBoxLayout,
     QWidget,
-    QDesktopWidget
 )
+
+from PyQt5.QtCore import (QTime, pyqtSignal)
 
 
 class Configuration(QWidget):
@@ -14,20 +19,32 @@ class Configuration(QWidget):
     This class is to show a second window (GUI) to modify
     the sampling configuration.
     """
+    sig = pyqtSignal()
     # TODO: Specify sampling time by using a configuration file
-    def __init__(self, sampling_time=10):
+    def __init__(self):
         super().__init__()
-        self.sampling_time = sampling_time
-        self.resize(150, 100)
+        # Default sampling time values
+        self.hours = 1
+        self.minutes = 0
+        self.seconds = 0
+        self.sampling_time = self.hours + self.minutes + self.seconds
+        self.resize(150, 150)
         self.setWindowTitle("Configuration")
         layout = QVBoxLayout()
-        self.label = QLabel("Specifiy sampling time (seconds)")
-        self.ok_button = QPushButton("OK")
-        self.ok_button.clicked.connect(self.read_data)
-        self.sampling_time_box = QLineEdit(str(self.sampling_time))
-        layout.addWidget(self.label)
-        layout.addWidget(self.sampling_time_box)
-        layout.addWidget(self.ok_button)
+        label = QLabel("Specifiy sampling time")
+        layout.addWidget(label)
+
+        # Set the time
+        default_time = QTime()
+        default_time.setHMS(self.hours, self.minutes, self.seconds)
+        self.sampling_time_edit = QTimeEdit()
+        self.sampling_time_edit.setTime(default_time)
+        self.sampling_time_edit.setTimeRange(QTime(00, 00, 5), QTime(24, 59, 59))
+        self.sampling_time_edit.setDisplayFormat("hh:mm:ss")
+        layout.addWidget(self.sampling_time_edit)
+        ok_button = QPushButton("OK")
+        ok_button.clicked.connect(self.read_data)
+        layout.addWidget(ok_button)
         self.setLayout(layout)
 
         # Move window location to the center
@@ -42,8 +59,10 @@ class Configuration(QWidget):
         Shows an error message box for an invalid input
         """
         self.hide()
-        self.sampling_time_box.setText(str(self.sampling_time))
-        print("incorrect input")
+        # Set last valid configuration
+        last_time = QTime()
+        print("Last configuration", self.hours, self.minutes, self.seconds)
+        self.sampling_time_edit.setTime(QTime(self.hours, self.minutes, self.seconds))
         msg = QMessageBox()
         msg.setWindowTitle("Configuration error")
         msg.setIcon(QMessageBox.Critical)
@@ -57,20 +76,24 @@ class Configuration(QWidget):
         """
         Reads the input data from the text boxes
         """
-        sampling_time = self.sampling_time_box.text()
-        # Validate sampling time input
-        if sampling_time.isdigit():
-            # TODO: For the Raspberry Pi 4, wait 5 seconds is the minimal time to
-            # allows the correct image processing. Replace hardcode by global constant.
-            if int(sampling_time) < 5:
-                self.show_error_msg("Sampling time has to be greater or equal than 5 seconds")
-            else :
-                print("correct input")
-                self.sampling_time = int(sampling_time)
-                self.hide()
-        else:
-            self.show_error_msg("Sampling time has to be an usigned integer")
+        conf = self.sampling_time_edit.time()
+        tmp_hours = conf.hour() * 3600
+        tmp_minutes = conf.minute() * 60
+        tmp_seconds = conf.second()
+        tmp_sampling_time = tmp_hours + tmp_minutes + tmp_seconds
 
+        print("Sampling time:", self.sampling_time)
+
+        if tmp_sampling_time < 5:
+            self.show_error_msg("Sampling time must be greater or equal than 5 seconds")
+        else:
+            print("correct input")
+            self.hours = tmp_hours
+            self.minutes = tmp_minutes
+            self.seconds = tmp_seconds
+            self.sampling_time = tmp_sampling_time
+            self.hide()
+            self.sig.emit()
 
     def get_sampling_time(self):
         """

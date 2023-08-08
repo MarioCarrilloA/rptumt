@@ -106,6 +106,7 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
         # Create instance of configuration
         self.config = Configuration()
+        self.config.sig.connect(self.shows_new_sampling_time)
 
         # Flags to exit the program correctly
         self.liveview_active = False
@@ -122,12 +123,17 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.video_timer = 43200
 
 
+    def shows_new_sampling_time(self):
+        stime = str(self.config.get_sampling_time())
+        self.console.log_msg(logging.INFO, "Sampling time: " + stime + " seconds")
+
+
     def configure(self):
         """
         Shows a second window to modify the current configuration.
         """
         self.config.show()
-        self.console.log_msg(logging.INFO, "Configure")
+        self.console.log_msg(logging.INFO, "Settings...")
 
 
     def quit(self):
