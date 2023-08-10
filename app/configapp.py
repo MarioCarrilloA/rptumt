@@ -27,7 +27,7 @@ class Configuration(QWidget):
         self.hours = 1
         self.minutes = 0
         self.seconds = 0
-        self.sampling_time = self.hours + self.minutes + self.seconds
+        self.sampling_time = (self.hours * 3600) + (self.minutes * 60) + self.seconds
         self.resize(150, 150)
         self.setWindowTitle("Configuration")
         layout = QVBoxLayout()
@@ -77,10 +77,10 @@ class Configuration(QWidget):
         Reads the input data from the text boxes
         """
         conf = self.sampling_time_edit.time()
-        tmp_hours = conf.hour() * 3600
-        tmp_minutes = conf.minute() * 60
+        tmp_hours = conf.hour()
+        tmp_minutes = conf.minute()
         tmp_seconds = conf.second()
-        tmp_sampling_time = tmp_hours + tmp_minutes + tmp_seconds
+        tmp_sampling_time = (tmp_hours * 3600) + (tmp_minutes * 60) + tmp_seconds
 
         print("Sampling time:", self.sampling_time)
 
@@ -101,3 +101,9 @@ class Configuration(QWidget):
         """
         return self.sampling_time
 
+    def get_HMS_sampling_time(self):
+        """
+        Gets hours, minutes and seconds which this app
+        waits to take every image
+        """
+        return self.hours, self.minutes, self.seconds

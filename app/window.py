@@ -124,8 +124,9 @@ class MainWindow(QMainWindow, guiApp, QObject):
 
 
     def shows_new_sampling_time(self):
-        stime = str(self.config.get_sampling_time())
-        self.console.log_msg(logging.INFO, "Sampling time: " + stime + " seconds")
+        h, m, s = self.config.get_HMS_sampling_time()
+        msg = "Hours:" + str(h) + " minutes:" + str(m) + " seconds:" + str(s)
+        self.console.log_msg(logging.INFO, "Sampling time: " + msg)
 
 
     def configure(self):
