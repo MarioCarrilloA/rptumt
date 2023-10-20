@@ -218,8 +218,11 @@ class MainWindow(QMainWindow, guiApp, QObject):
         # Usage of YOLOv5 nano model
         # TODO: Remove model path harcoded
         #model = pwd + "/" + "model/nano.pt"
-        model = pwd + "/" + "model/nano_22_05_2023.pt"
-        input_img = sample_path + "/" + img_name
+        #model = pwd + "/" + "model/nano_22_05_2023.pt"
+        model = pwd + "/" + "model/nano_29_08_2023.pt"
+        print("Using model:", model)
+        #input_img = sample_path + "/" + img_name
+        input_img = sample_path + "/*.png"
         detect.run(
             weights=model,
             source=input_img,
@@ -356,7 +359,12 @@ class MainWindow(QMainWindow, guiApp, QObject):
         everything again. Finally, the image is processed.
         """
         self.lamp.on()
-        sample_path, img_name = self.camera.save_single_image()
+        # TODO: The variable below must be removed
+        # it is just temporal code to make an experiment.
+        # EXTRA FRAMES TO PROCESS
+        num = 2
+        #sample_path, img_name = self.camera.save_single_image(backup_images=num)
+        sample_path, img_name = self.camera.save_images(num=num)
         ##################################################################
         # TAKE VIDEO
         self.counter = self.counter + self.config.get_sampling_time()
@@ -371,9 +379,18 @@ class MainWindow(QMainWindow, guiApp, QObject):
         self.lamp.off()
         self.console.log_msg(logging.INFO, "Processing prediction...")
 
+
         # Feed CNN model with the recent image
         self.predict(sample_path, img_name)
         self.console.log_msg(logging.INFO, "New sample processed")
+
+        # TODO: This block must be also removed, it is just to make an experiment
+        #for i in range(0, num_extra):
+        #    self.predict(sample_path, "sample_" + str(i + 1) + ".png")
+        #self.console.log_msg(logging.INFO, "Extra images processed")
+        ##################################################################
+
+
 
         # Compute data from labels
         sample = self.generate_sample_data(sample_path, img_name)

@@ -59,7 +59,10 @@ class Camera():
         return camera
 
 
-    def save_single_image(self):
+    # TODO: Re-implement properly this function, this modification must be temporal
+    # only to make a test
+    #def save_single_image(self):
+    def save_images(self, num=1):
         now = datetime.now()
         imgname = "sample.png"
         sample_path = self.experiment_id + "/" + "sample_" + now.strftime("%d_%m_%Y-%H_%M_%S")
@@ -68,6 +71,15 @@ class Camera():
         camera.start()
         time.sleep(CAMERA_PREPARATION_TIME)
         camera.capture_file(sample_path + "/" + imgname)
+
+        # TODO: REMOVE THIS TEMPORAL CODE BLOCK
+        ###############################################################
+        for i in range(0, num):
+            time.sleep(random.uniform(0.1, 0.8))
+            tmpname = "sample_" + str(i + 1) + ".png"
+            camera.capture_file(sample_path + "/" + tmpname)
+        ###############################################################
+
         camera.stop()
         camera.close()
         return sample_path, imgname
